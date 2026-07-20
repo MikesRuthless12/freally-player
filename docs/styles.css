@@ -1,0 +1,311 @@
+/* Freally Player — GitHub Pages site (Havoc dark theme)
+   © 2026 Mike Weaver — All Rights Reserved.
+   Mirrors the Freally Snipper site styling, tuned to the Havoc blue→cyan palette. */
+
+:root {
+  --bg-top: #16213a;
+  --bg-bottom: #070b14;
+  --panel: #0e1626;
+  --panel-2: #111b2e;
+  --border: #283650;
+  --text: #f5f7fa;
+  --muted: #93a0b5;
+  --accent: #4a9eff;
+  --accent-2: #00d4ff;
+  --success: #22c55e;
+  --warning: #f0b429;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.55;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, var(--bg-top), transparent 60%),
+    linear-gradient(180deg, #0a1120 0%, var(--bg-bottom) 100%);
+  background-color: var(--bg-bottom);
+  background-attachment: fixed;
+}
+
+/* ---- Hero ---- */
+.hero {
+  text-align: center;
+  padding: 72px 20px 28px;
+}
+
+.hero .logo {
+  border-radius: 22px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+
+.hero h1 {
+  margin: 18px 0 8px;
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero .sub {
+  margin: 0 auto;
+  max-width: 660px;
+  color: var(--muted);
+  font-size: 1.15rem;
+}
+
+.hero .tagline {
+  margin: 14px auto 0;
+  max-width: 660px;
+  color: var(--accent-2);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* ---- Layout ---- */
+main {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 16px 20px 40px;
+}
+
+/* ---- Feature highlights grid ---- */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin: 28px 0 8px;
+}
+
+.feature-card {
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.feature-card h3 {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+}
+
+.feature-card p {
+  margin: 0;
+  color: #c7d1e0;
+  font-size: 0.96rem;
+}
+
+/* ---- Release / section card ---- */
+.release {
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 26px 28px;
+  margin: 28px 0;
+  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.35);
+}
+
+.release-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-family: "SFMono-Regular", ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.95rem;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(74, 158, 255, 0.1);
+}
+
+.badge.upcoming {
+  color: var(--muted);
+  background: transparent;
+}
+
+.date {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.release h2 {
+  margin: 22px 0 10px;
+  font-size: 1.9rem;
+  font-weight: 700;
+}
+
+.release h3 {
+  margin: 22px 0 10px;
+  font-size: 1.15rem;
+}
+
+.summary {
+  color: #c7d1e0;
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.features {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+.features li {
+  margin: 8px 0;
+  color: #d4dcea;
+}
+
+.note {
+  margin: 20px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* ---- "Downloads in future releases" placeholder ---- */
+.downloads {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dl-placeholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.os-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.os-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 0.92rem;
+}
+
+.os-chip svg {
+  width: 18px;
+  height: 18px;
+  fill: #8ea0bd;
+  flex: none;
+}
+
+/* ---- Roadmap timeline ---- */
+.roadmap {
+  margin-top: 44px;
+}
+
+.roadmap h2 {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.timeline li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  margin: 10px 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.timeline li > div {
+  flex: 1;
+}
+
+.timeline strong {
+  display: block;
+  font-size: 1.05rem;
+}
+
+.timeline p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.soon {
+  color: var(--muted);
+  font-size: 0.82rem;
+  border: 1px dashed var(--border);
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.soon.now {
+  color: var(--accent-2);
+  border-color: rgba(0, 212, 255, 0.4);
+}
+
+/* ---- Footer ---- */
+footer {
+  text-align: center;
+  color: var(--muted);
+  padding: 30px 20px 56px;
+  font-size: 0.9rem;
+}
+
+footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* Enlarged hero logo so the app icon is visible and readable (>= 284px). */
+.hero .logo { width: 288px; max-width: 72vw; height: auto; }

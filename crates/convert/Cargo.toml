@@ -1,0 +1,15 @@
+# freally-convert — owned conversion/clip/record presets over the ffmpeg engine.
+# The ffmpeg engine is non-owned (behind the Engine boundary in freally-player-core); this crate
+# owns the preset/job orchestration.
+[package]
+name = "freally-convert"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+log.workspace = true

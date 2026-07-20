@@ -1,0 +1,69 @@
+# Freally Player — Cargo workspace
+#
+# © 2026 Mike Weaver — All Rights Reserved (proprietary, source-available; see LICENSE).
+# Project started: June 30th, 2026.
+#
+# This is the planning-stage workspace skeleton. The `src-tauri` app crate is the Tauri v2
+# desktop shell (Rust core + Tauri commands) that composites a native video surface under a
+# React + TypeScript + Vite web UI. The owned library crates under `crates/` hold the player
+# orchestration, media library, subtitle pipeline, streaming, and conversion logic — each kept
+# behind an interface so a non-owned backend (libmpv / ffmpeg / yt-dlp / libbluray) can be
+# swapped. Member crates are stubs until their phase lands (see product-roadmap.md).
+
+[workspace]
+resolver = "2"
+members = [
+    "src-tauri",
+    "crates/player",      # freally-player-core — playback orchestration over libmpv/ffmpeg
+    "crates/library",     # freally-library     — media library, scraping, watch-state (SQLite)
+    "crates/subtitles",   # freally-subtitles   — SRT/ASS/SSA/PGS/VobSub/WebVTT + fetch + STT
+    "crates/streaming",   # freally-streaming   — network streams, casting/DLNA, yt-dlp sidecar
+    "crates/convert",     # freally-convert     — transcode presets, clip/record, GIF export
+]
+
+# Shared dependency versions are pinned here and inherited by member crates via
+# `<dep>.workspace = true`. Versions are indicative for planning; lockfile is source of truth.
+[workspace.package]
+version = "0.1.0"
+authors = ["Mike Weaver <mythodikalone@gmail.com>"]
+edition = "2021"
+rust-version = "1.82"
+license = "LicenseRef-Proprietary-AllRightsReserved"
+repository = "https://github.com/MikesRuthless12/freally-player"
+homepage = "https://mikesruthless12.github.io/freally-player/"
+
+[workspace.dependencies]
+# --- Desktop shell (non-owned, MIT/Apache) ---
+tauri = { version = "2", features = [] }
+tauri-build = { version = "2" }
+
+# --- Media engine (non-owned; primary decode/render + coverage) ---
+# libmpv via its render API is the primary playback engine; ffmpeg/libav* for coverage and
+# conversion. These are kept behind the player-core `Engine` interface.
+libmpv2 = "4"            # libmpv (mpv) bindings incl. render API  (libmpv-rs successor)
+ffmpeg-next = "7"        # ffmpeg / libav* bindings (coverage + convert/clip/record)
+symphonia = { version = "0.5", features = ["all"] }  # pure-Rust audio decode where useful
+
+# --- Subtitles / streaming / casting (non-owned, behind interfaces) ---
+# yt-dlp is NOT linked — it is driven as a standalone sidecar process (see crates/streaming).
+rupnp = "2"              # UPnP/DLNA control (cast to / discover renderers)
+mdns-sd = "0.11"         # mDNS service discovery (Chromecast/DLNA on the LAN)
+souvlaki = "0.7"         # OS media-key + now-playing integration (SMTC/MPRIS/MediaRemote)
+
+# --- Storage / serde / paths / crypto ---
+rusqlite = { version = "0.32", features = ["bundled"] }   # local library / watch-state / cache
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+directories = "5"        # OS config/data/cache paths
+sha2 = "0.10"            # integrity hashing (optional model/asset pinning)
+
+# --- i18n / logging ---
+fluent = "0.16"          # Fluent catalogs for the 18-language UI/engine strings
+log = "0.4"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

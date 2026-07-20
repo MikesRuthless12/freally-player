@@ -1,0 +1,19 @@
+# freally-player-core — owned playback orchestration over the libmpv/ffmpeg engine.
+# The decode/render engine is NON-owned and sits behind the `Engine` trait; the only `unsafe`
+# in the whole app is the audited FFI module here (so this crate is NOT #![forbid(unsafe_code)]).
+[package]
+name = "freally-player-core"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+log.workspace = true
+# Non-owned decode/render engines (behind the Engine trait; LGPL builds, no GPL/nonfree):
+libmpv2.workspace = true       # primary decode + render (render API)
+ffmpeg-next.workspace = true   # coverage + conversion engine
+symphonia.workspace = true     # pure-Rust audio decode where useful

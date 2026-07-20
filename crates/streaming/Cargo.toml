@@ -1,0 +1,16 @@
+# freally-streaming — owned streaming/casting layer: network streams, cast/DLNA, yt-dlp driver.
+# yt-dlp is NOT linked — it is driven as a separate subprocess. Casting is LAN-only and off until started.
+[package]
+name = "freally-streaming"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+log.workspace = true
+rupnp.workspace = true     # UPnP/DLNA cast-to / discover / renderer (LAN)
+mdns-sd.workspace = true   # mDNS discovery (Chromecast/DLNA on the LAN)

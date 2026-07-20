@@ -1,0 +1,110 @@
+Freally Player — Proprietary, Source-Available License
+© 2026 Mike Weaver (Havoc Software). All Rights Reserved.
+
+Project started: June 30th, 2026.
+
+================================================================================
+SUMMARY (non-binding; the terms below control)
+================================================================================
+Freally Player is PROPRIETARY and SOURCE-AVAILABLE. The source is published so
+you can READ it and BUILD/RUN it for your own PERSONAL EVALUATION only. It is
+NOT open source. You may NOT copy, modify, redistribute, sublicense, or reuse
+the code or any part of it. Pre-built binaries (when released) are free to
+download and run under these terms and the EULA.
+
+================================================================================
+1. DEFINITIONS
+================================================================================
+"Software" means the Freally Player source code and pre-built binaries in this
+repository and its official releases, authored by the Licensor — including the
+Rust core, the player-core orchestration, the media library, the subtitle
+pipeline, the streaming/casting layer, the conversion utilities, the Tauri/web
+UI, assets, and documentation — but EXCLUDING the third-party and user-installed
+components listed in THIRD-PARTY-NOTICES.md, which remain under their own
+licenses.
+
+"Licensor" means Mike Weaver <mythodikalone@gmail.com> (Havoc Software).
+
+"You" means the individual or entity exercising rights under this License.
+
+================================================================================
+2. GRANT (LIMITED, PERSONAL, EVALUATION ONLY)
+================================================================================
+Subject to your compliance with this License, the Licensor grants you a personal,
+non-exclusive, non-transferable, non-sublicensable, revocable license to:
+
+  (a) view and read the Software's source code; and
+  (b) compile, build, and run the Software on machines you control, solely for
+      your own personal evaluation and use.
+
+No other rights are granted, expressly or by implication.
+
+================================================================================
+3. RESTRICTIONS
+================================================================================
+Except to the minimum extent applicable law expressly permits notwithstanding
+this License, you may NOT:
+
+  (a) copy the Software except as strictly necessary to build/run it for your
+      own personal evaluation under Section 2;
+  (b) modify, adapt, translate, or create derivative works of the Software;
+  (c) redistribute, publish, sublicense, sell, rent, lease, lend, host as a
+      service, or otherwise make the Software (source or binary) available to
+      any third party;
+  (d) use the Software or its source to develop, train, or assist a competing
+      product, or to copy its design;
+  (e) remove, obscure, or alter any copyright, trademark, or proprietary notice;
+  (f) use the Software in violation of any applicable law (including codec,
+      content-protection, and recording-consent laws — see Section 5).
+
+================================================================================
+4. PRO LICENSE / FEATURE GATING
+================================================================================
+The Software is offered under a freemium model. The free tier provides the
+complete core playback experience. Certain "Pro" features are unlocked with a
+one-time, Ed25519-signed license key validated offline. A Pro key authorizes
+use of Pro features by the licensed user; it does not expand any of the rights
+restricted by Section 3, and it may not be shared, resold, or redistributed.
+
+================================================================================
+5. THIRD-PARTY COMPONENTS, CODECS & CONTENT PROTECTION
+================================================================================
+The Software drives and/or bundles third-party components (e.g. the libmpv/mpv
+and ffmpeg media engines, libbluray/libdvdnav, and the yt-dlp sidecar) that
+remain licensed under their own terms — see THIRD-PARTY-NOTICES.md. Some media
+formats (e.g. H.264/AVC, HEVC/H.265, AAC) are covered by third-party patents;
+your use of those formats may be subject to those third parties' terms. Optical-
+disc decryption is legally constrained: AACS/CSS decryption keys are NOT bundled,
+and you are responsible for complying with the laws of your jurisdiction. The
+Licensor's owned code is the only part covered by this License.
+
+================================================================================
+6. NO WARRANTY
+================================================================================
+THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF ANY
+KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+================================================================================
+7. LIMITATION OF LIABILITY
+================================================================================
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE LICENSOR WILL NOT BE LIABLE FOR ANY
+INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR FOR ANY
+LOSS OF DATA, PROFITS, OR GOODWILL, ARISING OUT OF OR RELATED TO THE SOFTWARE OR
+THIS LICENSE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+================================================================================
+8. TERMINATION
+================================================================================
+This License terminates automatically if you breach it. On termination you must
+stop using and delete all copies of the Software (source and binaries). Sections
+3 and 5–7 survive termination.
+
+================================================================================
+9. RESERVATION OF RIGHTS
+================================================================================
+All rights not expressly granted are reserved by the Licensor. This License does
+not grant any rights to the Licensor's trademarks, names, or logos
+("Freally", "Freally Player", "Havoc Software", "Mythodikal").
+
+Questions or licensing requests: Mike Weaver <mythodikalone@gmail.com>.

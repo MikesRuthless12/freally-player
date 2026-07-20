@@ -1,0 +1,8 @@
+# Formatting is enforced in CI: `cargo fmt --all -- --check` must be green every phase.
+# Keep these conservative so diffs stay small (CLAUDE.md: do not reformat entire files,
+# do not reorder imports unless required).
+edition = "2021"
+max_width = 100
+newline_style = "Unix"
+use_field_init_shorthand = true
+use_try_shorthand = true

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Freally Player — Documentation</title>
+    <meta
+      name="description"
+      content="The Freally Player document index — the public governance, policy, and site documents in one place."
+    />
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="favicon-96.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .doc-layout {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 1rem 2rem 2rem;
+      }
+
+      .doc-intro {
+        color: #c7d1e0;
+        font-size: 1.05rem;
+        margin: 0 0 8px;
+      }
+
+      .doc-group {
+        margin-top: 30px;
+      }
+
+      .doc-group > h2 {
+        font-size: 1.35rem;
+        margin: 0 0 4px;
+      }
+
+      .doc-group > p.group-note {
+        color: var(--muted);
+        font-size: 0.95rem;
+        margin: 0 0 14px;
+      }
+
+      .doc-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 14px;
+      }
+
+      .doc-card {
+        display: block;
+        text-decoration: none;
+        background: linear-gradient(180deg, var(--panel-2), var(--panel));
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px 20px;
+        transition: border-color 0.15s, transform 0.1s;
+      }
+
+      .doc-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-1px);
+      }
+
+      .doc-card .doc-name {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .doc-card .doc-file {
+        font-family: "SFMono-Regular", ui-monospace, "Cascadia Code", Consolas, monospace;
+        font-size: 0.78rem;
+        color: var(--accent-2);
+        background: rgba(0, 212, 255, 0.08);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 2px 7px;
+        white-space: nowrap;
+      }
+
+      .doc-card p {
+        margin: 8px 0 0;
+        color: #c7d1e0;
+        font-size: 0.94rem;
+        line-height: 1.5;
+      }
+
+      .doc-card .priv {
+        color: var(--warning);
+      }
+
+      .legend {
+        margin: 18px 0 0;
+        padding: 12px 16px;
+        background: rgba(74, 158, 255, 0.07);
+        border-left: 3px solid var(--accent);
+        border-radius: 0 8px 8px 0;
+        color: #c7d1e0;
+        font-size: 0.92rem;
+      }
+
+      .legend strong {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <img class="logo" src="freally-icon.png" alt="Freally Player icon" width="288" height="288" />
+      <h1>Documentation</h1>
+      <p class="sub">The Freally Player document index — every project document, with a one-line description and a link.</p>
+    </header>
+
+    <!-- Unified search across every Freally app (autocomplete). -->
+    <style>
+      .doc-searchbar { max-width: 1150px; margin: 1.25rem auto 0; padding: 0 2rem; box-sizing: border-box; }
+      .doc-search { position: relative; }
+      .ds-box { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border, #26324a); border-radius: 12px; background: rgba(255,255,255,0.03); padding: 10px 14px; }
+      .ds-box:focus-within { border-color: var(--accent, #6ea8fe); box-shadow: 0 0 0 3px rgba(110,168,254,0.12); }
+      .ds-icon { color: var(--muted, #93a1b5); font-size: 1.1rem; line-height: 1; }
+      #doc-search-input { flex: 1; min-width: 0; border: none; background: transparent; color: var(--text, #e6edf6); font-size: 0.98rem; outline: none; padding: 2px 0; }
+      #doc-search-input::placeholder { color: var(--muted, #93a1b5); }
+      .ds-results { list-style: none; margin: 6px 0 0; padding: 6px; position: absolute; left: 0; right: 0; z-index: 50; background: var(--panel, #14181f); border: 1px solid var(--border, #26324a); border-radius: 12px; box-shadow: 0 18px 55px rgba(0,0,0,0.55); max-height: 62vh; overflow-y: auto; }
+      .ds-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; }
+      .ds-item.ds-active, .ds-item:hover { background: rgba(110,168,254,0.12); }
+      .ds-app { flex: 0 0 auto; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent, #6ea8fe); background: rgba(110,168,254,0.12); border: 1px solid rgba(110,168,254,0.25); border-radius: 6px; padding: 3px 6px; margin-top: 2px; white-space: nowrap; }
+      .ds-text { display: flex; flex-direction: column; min-width: 0; }
+      .ds-title { color: var(--text, #e6edf6); font-weight: 600; font-size: 0.92rem; }
+      .ds-desc { color: var(--muted, #93a1b5); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .ds-empty { padding: 10px; color: var(--muted, #93a1b5); font-size: 0.88rem; }
+    </style>
+    <div class="doc-searchbar"><div class="doc-search" id="doc-search"></div></div>
+
+    <div class="doc-layout">
+      <p class="doc-intro">
+        Freally Player is in the <strong>planning</strong> stage. This page is the hub for the full
+        document set. The <strong>public</strong> documents live in this repository; the detailed
+        planning + design set is maintained <span class="priv">privately</span> and is not published in
+        the public repo — it is listed here so the index is complete.
+      </p>
+
+      <div class="legend">
+        <strong>How to read this:</strong> each card links a document and says what it's for. Public
+        documents link to the repo on GitHub.
+      </div>
+
+      <!-- Governance & legal -->
+      <div class="doc-group">
+        <h2>Governance &amp; legal</h2>
+        <p class="group-note">License, privacy, security, and the third-party/codec posture.</p>
+        <div class="doc-cards">
+          <a class="doc-card" href="https://github.com/MikesRuthless12/freally-player/blob/main/README.md">
+            <span class="doc-name">README <span class="doc-file">README.md</span></span>
+            <p>What Freally Player is, the per-OS build (including the libmpv/ffmpeg dependency), the planned stack, editions, and project status.</p>
+          </a>
+          <a class="doc-card" href="https://github.com/MikesRuthless12/freally-player/blob/main/LICENSE">
+            <span class="doc-name">License <span class="doc-file">LICENSE</span></span>
+            <p>Proprietary, source-available — © 2026 Mike Weaver, All Rights Reserved. Read + build/run for personal evaluation only; no copy/modify/redistribute.</p>
+          </a>
+          <a class="doc-card" href="https://github.com/MikesRuthless12/freally-player/blob/main/PRIVACY.md">
+            <span class="doc-name">Privacy Policy <span class="doc-file">PRIVACY.md</span></span>
+            <p>No telemetry, no ads, no account — what's collected (nothing) and the opt-in-only network use.</p>
+          </a>
+          <a class="doc-card" href="https://github.com/MikesRuthless12/freally-player/blob/main/SECURITY.md">
+            <span class="doc-name">Security Policy <span class="doc-file">SECURITY.md</span></span>
+            <p>How to report a vulnerability, plus the security scope — untrusted-media decode hardening, the native-surface boundary, and the yt-dlp/cast trust notes.</p>
+          </a>
+          <a class="doc-card" href="https://github.com/MikesRuthless12/freally-player/blob/main/THIRD-PARTY-NOTICES.md">
+            <span class="doc-name">Third-Party Notices <span class="doc-file">THIRD-PARTY-NOTICES.md</span></span>
+            <p>Attribution for libmpv/ffmpeg, yt-dlp, libbluray/libdvdnav, and the rest — plus the LGPL engine posture and the codec/patent + AACS-keys-not-bundled notes.</p>
+          </a>
+          <a class="doc-card" href="https://github.com/MikesRuthless12/freally-player/blob/main/EULA.md">
+            <span class="doc-name">EULA <span class="doc-file">EULA.md</span></span>
+            <p>The end-user license agreement (draft): grant, all-free terms, your-content responsibility, the disc-decryption + codec terms, and warranty/liability.</p>
+          </a>
+          <a class="doc-card" href="https://github.com/MikesRuthless12/freally-player/blob/main/CHANGELOG.md">
+            <span class="doc-name">Changelog <span class="doc-file">CHANGELOG.md</span></span>
+            <p>Keep-a-Changelog history. Currently "Unreleased" (planning) — no public releases yet.</p>
+          </a>
+        </div>
+      </div>
+
+      <!-- Site -->
+      <div class="doc-group">
+        <h2>This site</h2>
+        <p class="group-note">The public GitHub Pages site.</p>
+        <div class="doc-cards">
+          <a class="doc-card" href="index.html">
+            <span class="doc-name">Home <span class="doc-file">docs/index.html</span></span>
+            <p>The landing page — what Freally Player is, feature highlights, the download placeholders, and the roadmap to 1.0.0.</p>
+          </a>
+          <a class="doc-card" href="changelog.html">
+            <span class="doc-name">Releases &amp; Updates <span class="doc-file">docs/changelog.html</span></span>
+            <p>The public changelog page. Seeded with the roadmap to 1.0.0 — downloads arrive in future releases.</p>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>© 2026 Mike Weaver — All Rights Reserved · completely free · local-first · no ads · no telemetry</p>
+      <p>
+        <a href="https://github.com/MikesRuthless12/freally-player">GitHub</a> ·
+        <a href="index.html">Home</a> ·
+        <a href="changelog.html">Changelog</a> ·
+        <a href="documentation.html" aria-current="page">Documentation</a>
+      </p>
+    </footer>
+
+    <script src="search-index.js"></script>
+    <script src="search.js"></script>
+  </body>
+</html>

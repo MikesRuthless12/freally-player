@@ -1,0 +1,37 @@
+# Normalize line endings so Windows/macOS/Linux contributors don't churn diffs.
+# (CLAUDE.md: do not change line endings.) Text is normalized to LF in the repo;
+# Windows-only scripts keep CRLF.
+* text=auto eol=lf
+
+*.rs        text eol=lf
+*.toml      text eol=lf
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.json      text eol=lf
+*.css       text eol=lf
+*.html      text eol=lf
+*.md        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.ftl       text eol=lf
+
+*.bat       text eol=crlf
+*.ps1       text eol=crlf
+
+# Treat binaries as binary (no EOL/diff munging).
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.ico       binary
+*.icns      binary
+*.gif       binary
+*.mp4       binary
+*.mkv       binary
+*.webm      binary
+*.woff2     binary
+
+# Keep the GitHub Pages site (docs/) and governance text out of language stats so the
+# repo reports as Rust/TypeScript, not HTML.
+docs/**        linguist-documentation
+*.md           linguist-documentation

@@ -1,0 +1,63 @@
+# --- Rust / Cargo ---
+/target
+**/target
+Cargo.lock.bak
+*.pdb
+
+# --- Tauri / web UI (src-tauri app + React+TS+Vite frontend) ---
+# The frontend lives under src-tauri/ui (or ui/); build output and deps are ignored.
+node_modules/
+dist/
+dist-ssr/
+.vite/
+src-tauri/target/
+src-tauri/gen/
+*.tsbuildinfo
+
+# --- Packaging / release artifacts ---
+*.msi
+*.exe
+*.dmg
+*.app
+*.AppImage
+*.deb
+*.rpm
+*.flatpak
+/release
+/artifacts
+
+# --- Local media / scrape cache / library DB (never commit user data) ---
+*.fvlib
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+/.cache
+/cache
+
+# --- Secrets / config (treat as sensitive per CLAUDE.md) ---
+.env
+.env.*
+*.pem
+*.key
+licensing/private*.key
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Product-planning documents — maintained privately, never published (suite pattern).
+Build-Prompts-Guide.md
+prd.md
+product-roadmap.md
+product-vision.md
+gtm.md
+vision.json
+Live-To-Do-List.md
+Freally-Player-Feature-Roadmap.md
+Freally-Player-Competition-Guide-Features.md
+images/
