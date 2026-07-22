@@ -36,11 +36,19 @@ jobs:
       - run: npm run test:ui
 
   # Visual smoke: boots the REAL built UI against a mocked IPC and drives every feature this
-  # phase added, screenshotting each panel. Runs on one OS because the web UI does not vary
-  # by platform — the per-OS proof is `app-boot` below plus `cargo test` on the matrix.
+  # phase added, screenshotting each panel.
+  #
+  # Runs on ALL THREE OSes, not one. The chrome itself does not vary by platform, but font
+  # resolution does: which face a script actually falls back to is a property of the machine,
+  # so `fonts.spec.ts` is only meaningful when it runs on each of them. Screenshots are tagged
+  # per OS and uploaded per OS, giving one image per language per platform to eyeball.
   visual-smoke:
-    name: Visual smoke — Playwright gallery
-    runs-on: ubuntu-latest
+    name: Visual smoke — Playwright gallery — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,8 +58,15 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Install Playwright browser
+      # `--with-deps` installs OS packages and is Linux-only; elsewhere it is an error, not a
+      # no-op.
+      - name: Install Playwright browser (Linux)
+        if: matrix.os == 'ubuntu-latest'
         run: npx playwright install --with-deps chromium
+        working-directory: ui
+      - name: Install Playwright browser
+        if: matrix.os != 'ubuntu-latest'
+        run: npx playwright install chromium
         working-directory: ui
       - name: Build the UI
         run: npm run build
@@ -61,7 +76,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-smoke-gallery
+          name: visual-smoke-gallery-${{ matrix.os }}
           path: ui/e2e/screenshots/
           if-no-files-found: error
 
@@ -119,8 +134,9 @@ jobs:
       - run: npm ci
       - name: Build the frontend
         run: npm run build
+      # `engine-libmpv` is a default feature of the app crate, so this is the shipping build.
       - name: Build the app
-        run: cargo build -p freally-player --features engine-libmpv
+        run: cargo build -p freally-player
 
       # Each OS needs its own capture tool. The gate is that the process is still ALIVE after
       # settling — a crash on startup is the regression this job exists to catch.
@@ -251,19 +267,35 @@ jobs:
 
       # WebKitGTK is the webview on Linux; Windows uses the preinstalled WebView2 runtime and
       # macOS uses WKWebView, so neither needs anything here.
-      # NOTE: libmpv/ffmpeg dev packages are deliberately NOT installed yet — the
-      # `engine-libmpv` / `engine-ffmpeg` features are off by default and land in P0.3. They
-      # get added here together with the code that needs them.
+      # libmpv IS needed on every OS now: `engine-libmpv` is a DEFAULT feature of the app crate
+      # (it is what ships), so `--workspace` links it. The owned library crates keep their
+      # engines optional and still build without it.
       - name: Install Linux system dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
+            libmpv-dev \
             libwebkit2gtk-4.1-dev \
             libgtk-3-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
-            patchelf
+            patchelf \
+            xvfb
+
+      - name: Install libmpv (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install mpv
+      - name: Point the build at Homebrew's libmpv (macOS)
+        if: matrix.os == 'macos-latest'
+        run: echo "MPV_LIB_DIR=$(brew --prefix mpv)/lib" >> "$GITHUB_ENV"
+
+      # No system libmpv exists on Windows, and the bundled DLL is also a `bundle.resources`
+      # entry that tauri-build resolves during `cargo build` — a missing vendor tree fails the
+      # build outright rather than at package time.
+      - name: Vendor libmpv (Windows)
+        if: matrix.os == 'windows-latest'
+        run: node scripts/vendor-libmpv.mjs
 
       # The toolchain (channel + rustfmt/clippy) comes from rust-toolchain.toml, so local
       # and CI run the exact same compiler.
@@ -284,12 +316,19 @@ jobs:
 
       - name: Format
         run: cargo fmt --all --check
-      # Not --all-features: the engine features link against system media libraries that this
-      # job deliberately does not install (see the note above).
+      # Not --all-features: `engine-ffmpeg` links against system media libraries this job does
+      # not install. `engine-libmpv` arrives anyway, as a default feature of the app crate.
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
+      # Cargo unifies features across one invocation, so `--workspace` enables `engine-libmpv`
+      # on freally-player-core too and its engine tests run here, not just in the `engine` job
+      # below. That is why Linux needs Xvfb: same reason, same treatment as that job.
       - name: Test
+        if: matrix.os != 'ubuntu-latest'
         run: cargo test --workspace
+      - name: Test (headless X)
+        if: matrix.os == 'ubuntu-latest'
+        run: xvfb-run -a cargo test --workspace
       - name: Build
         run: cargo build --workspace
 

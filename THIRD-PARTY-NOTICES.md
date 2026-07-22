@@ -41,6 +41,31 @@ components.
 Transitive Rust dependencies are MIT / Apache-2.0 / BSD / Zlib / MPL. Verify the full set with
 `cargo about` / `cargo deny` before any release.
 
+## Fonts — bundled
+
+| Component | Role | License |
+|-----------|------|---------|
+| [Noto Sans](https://fonts.google.com/noto) (Latin / Greek / Cyrillic / Devanagari / Vietnamese) | the UI typeface | **OFL-1.1** |
+| Noto Sans Arabic · Noto Sans Devanagari | Arabic and Hindi UI text | **OFL-1.1** |
+| Noto Sans SC · TC · JP · KR | Simplified/Traditional Chinese, Japanese, Korean UI **and content** text | **OFL-1.1** |
+| [Fontsource](https://fontsource.org) (`@fontsource-variable/*`) | the packaging that delivers the above as self-hosted WOFF2 | MIT (packaging; the fonts stay OFL-1.1) |
+
+> **Noto is OFL-1.1, not Apache-2.0.** Early Noto releases were Apache-2.0 and the assumption
+> outlives them; Google relicensed the family to the SIL Open Font License years ago, and OFL is
+> what governs what we ship. OFL explicitly permits bundling inside a proprietary application:
+> the fonts may be redistributed with software, at no cost or sold as part of it, provided they
+> are not sold *on their own* and this notice travels with them.
+>
+> The one clause with teeth is the **Reserved Font Name**: a modified font may not keep the Noto
+> name. We therefore ship the published WOFF2 files **byte-for-byte unmodified** — no subsetting,
+> no re-hinting, no renaming — which keeps us clear of it entirely. If a future build ever
+> subsets these fonts to save space, it must be renamed, and this notice updated to match.
+>
+> Bundled rather than relied upon: Windows and macOS ship CJK system fonts, but many Linux
+> installs do not, so unbundled CJK renders as tofu there. The variable builds keep all four CJK
+> families to ~19 MB in total. `ui/e2e/fonts.spec.ts` asserts every shipped language actually
+> rasterises in a bundled face.
+
 ## Media engine — decode / render / hardware decode (the core dependency)
 
 **Linked / bundled (the playback engine):**
@@ -64,9 +89,33 @@ Transitive Rust dependencies are MIT / Apache-2.0 / BSD / Zlib / MPL. Verify the
 > (no GPL-only or nonfree components enabled). LGPL permits use in a proprietary application provided
 > the LGPL components remain replaceable/relinkable and their licenses + source offers are honored —
 > which is why the engine sits **behind the player-core `Engine` interface** and is shipped as a
-> separate shared library, with this notice and a written offer for the corresponding LGPL source.
+> separate shared library, with this notice and the written offer below.
 > We do **not** enable ffmpeg's GPL or nonfree paths. This is the same posture VLC and other
 > LGPL-based players ship under; it is reviewed before each release.
+
+### Written offer for the LGPL source — exactly what we ship
+
+The installers **bundle** the LGPL engine as a shared library, so this offer is a live obligation,
+not a formality. What ships, per platform:
+
+| Platform | Bundled file | Upstream build |
+|----------|--------------|----------------|
+| Windows | `libmpv-2.dll`, installed **next to `freally-player.exe`** | [`shinchiro/mpv-winbuild-cmake`](https://github.com/shinchiro/mpv-winbuild-cmake) release **`20260610`**, asset `mpv-dev-x86_64-20260610-git-304426c.7z` (mpv `git-304426c`) — SHA-256 pinned and verified by `scripts/vendor-libmpv.mjs` |
+
+This Windows build links ffmpeg and libass **statically into `libmpv-2.dll`**; that whole library is
+LGPL and is shipped as a replaceable file, which is what LGPL §4 requires. **You may replace it:**
+drop your own build of `libmpv-2.dll` (same filename, compatible ABI) into the install directory and
+the app will load yours instead — the executable imports it by name at load time.
+
+**The offer.** For **three years** from the date you received this software, we will provide the
+complete corresponding source for the LGPL components in the build you received, plus the scripts
+used to configure and build them, for no more than the cost of distribution. Request it from
+**mythodikalone@gmail.com** (subject: *"LGPL source request — Freally Player"*), stating the version
+and platform shown in the app's **About** pane (the ⓘ icon in the title bar). The upstream sources
+are also public at the URLs above; the pinned tag and commit identify the exact revision.
+
+> **Maintenance note:** when `scripts/vendor-libmpv.mjs` bumps its pinned `RELEASE`, update this
+> table in the same commit. An offer that names a build we no longer ship is not a valid offer.
 
 ## Subtitles, streaming, casting & media keys
 

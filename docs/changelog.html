@@ -6,7 +6,7 @@
     <title>Freally Player — Releases &amp; Updates</title>
     <meta
       name="description"
-      content="Every Freally Player release, changelog, and desktop download in one place. Currently in planning — downloads available in future releases."
+      content="Every Freally Player release, changelog, and desktop download in one place. Latest: v0.10.1 for Windows, macOS and Linux."
     />
     <link rel="icon" href="favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
@@ -25,32 +25,42 @@
     </header>
 
     <main>
-      <!-- Planning status -->
+      <!-- Latest release -->
       <article class="release latest">
         <div class="release-head">
           <div class="meta">
-            <span class="badge">v0.1.0 · In development</span>
-            <span class="date">Building toward 0.10.0 · Project started Jun 30, 2026</span>
+            <span class="badge">v0.10.1 · Latest</span>
+            <span class="date">Jul 22, 2026 · Project started Jun 30, 2026</span>
           </div>
-          <span class="dl-placeholder">Downloads available in future releases</span>
+          <a
+            class="dl-btn primary"
+            href="https://github.com/MikesRuthless12/freally-player/releases/tag/v0.10.1"
+            >Downloads</a
+          >
         </div>
 
-        <h2>No releases yet — building toward 0.10.0</h2>
+        <h2>0.10.1 — the first build that plays</h2>
         <p class="summary">
-          Freally Player now builds and plays video, but nothing has been released yet.
-          When the first release ships, installers for Windows, macOS,
-          and Linux will appear here, and this page will list each version's changes. Freally Player is
+          The installers now carry the playback engine, so a downloaded build plays media out of the
+          box — no extra libraries to install. Freally Player is
           completely free — every feature included: the full player, the media library, casting, and conversion.
           <strong>No ads, no telemetry, no account — ever.</strong>
         </p>
 
-        <h3>Built so far (0.10.0 — Foundation)</h3>
+        <h3>New in 0.10.1</h3>
+        <ul class="features">
+          <li><strong>The player actually plays.</strong> The media engine ships inside the installers on Windows, macOS and Linux. Nothing to install alongside it.</li>
+          <li><strong>Every language renders.</strong> The Noto typeface is bundled for Latin, Greek, Cyrillic, Vietnamese, Arabic, Hindi, Chinese (Simplified and Traditional), Japanese and Korean — including filenames and subtitle tracks, whatever script the media itself uses. Previously these could appear as empty boxes on Linux.</li>
+          <li><strong>macOS ships for both chips.</strong> Separate Apple Silicon and Intel builds, each with the engine bundled.</li>
+        </ul>
+
+        <h3>Also in the 0.10 foundation</h3>
         <ul class="features">
           <li>The Tauri v2 shell (Rust core + a modern React/TypeScript UI in the Havoc dark theme, with a light theme too), and the Windows build as a GUI app that opens no console window.</li>
           <li><strong>The key architecture, working:</strong> decoded video is rendered into a native, hardware-accelerated GPU surface driven through the libmpv render API and composited with the web UI, so video never travels through the interface layer. Video output runs on <strong>Windows</strong> today; the macOS and Linux surfaces are still being built, and the app says so plainly rather than showing a blank screen.</li>
           <li>Playback controls wired end to end — open, play, pause, and seek — with the interface following the player's real state.</li>
           <li>A first-run licence agreement, and opt-in anonymous bug reporting that never sends anything without an explicit click.</li>
-          <li>The cross-platform CI matrix — including a job that verifies the media engine on Windows, macOS and Linux — and a tag-triggered release workflow that produces draft installers per OS.</li>
+          <li>The cross-platform CI matrix — including a job that verifies the media engine on Windows, macOS and Linux — and a tag-triggered release workflow that produces the installers per OS.</li>
           <li>This Havoc-branded site, with the roadmap to 1.0.0.</li>
         </ul>
       </article>
@@ -59,14 +69,6 @@
       <section class="roadmap">
         <h2>Roadmap to 1.0.0</h2>
         <ol class="timeline">
-          <li>
-            <span class="badge upcoming">0.10.0</span>
-            <div>
-              <strong>Foundation &amp; the native video surface</strong>
-              <p>Tauri + Rust shell and hardware-accelerated video on a native surface under the modern web UI.</p>
-            </div>
-            <span class="soon now">Up next</span>
-          </li>
           <li>
             <span class="badge upcoming">0.20.0 – 0.50.0</span>
             <div>

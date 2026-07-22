@@ -100,11 +100,14 @@ npm run tauri dev                 # builds the UI + Rust core, opens the player 
 npm run tauri build               # optimized, packaged build per OS (installer artifacts)
 ```
 
-The media engine is **optional at build time**: without `--features engine-libmpv` the app
-builds and runs with no media libraries installed and reports plainly that it has no playback
-engine. On macOS/Linux libmpv comes from the package manager (`brew install mpv`,
-`apt install libmpv-dev`); on Windows there is no system libmpv, so `vendor-libmpv.mjs` fetches
-a SHA-256-pinned build and generates the MSVC import library the upstream package omits.
+**libmpv is required to build the app** — `engine-libmpv` is a default feature, because the
+engine is what the installers ship. On macOS/Linux libmpv comes from the package manager
+(`brew install mpv`, `apt install libmpv-dev`); on Windows there is no system libmpv, so
+`vendor-libmpv.mjs` fetches a SHA-256-pinned build and generates the MSVC import library the
+upstream package omits.
+
+The owned library crates keep their engines behind optional features, so
+`cargo build -p freally-player-core` still works on a machine with no media libraries at all.
 
 The downloadable **Windows** build is a **GUI app with no console window**.
 

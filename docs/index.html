@@ -32,8 +32,8 @@
       <article class="release">
         <div class="release-head">
           <div class="meta">
-            <span class="badge">v0.1.0 · Planning</span>
-            <span class="date">Pre-development · Project started Jun 30, 2026</span>
+            <span class="badge">v0.10.1 · Latest release</span>
+            <span class="date">Jul 22, 2026 · Project started Jun 30, 2026</span>
           </div>
         </div>
         <h2>The modern VLC — that respects you</h2>
@@ -49,7 +49,36 @@
 
         <h3>Downloads</h3>
         <div class="downloads">
-          <span class="dl-placeholder">Downloads available in future releases</span>
+          <a
+            class="dl-btn primary"
+            href="https://github.com/MikesRuthless12/freally-player/releases/download/v0.10.1/Freally.Player_0.10.1_x64-setup.exe"
+            >Windows</a
+          >
+          <a
+            class="dl-btn"
+            href="https://github.com/MikesRuthless12/freally-player/releases/download/v0.10.1/Freally.Player_0.10.1_aarch64.dmg"
+            >macOS (Apple Silicon)</a
+          >
+          <a
+            class="dl-btn"
+            href="https://github.com/MikesRuthless12/freally-player/releases/download/v0.10.1/Freally.Player_0.10.1_x64.dmg"
+            >macOS (Intel)</a
+          >
+          <a
+            class="dl-btn"
+            href="https://github.com/MikesRuthless12/freally-player/releases/download/v0.10.1/Freally.Player_0.10.1_amd64.AppImage"
+            >Linux (AppImage)</a
+          >
+          <a
+            class="dl-btn"
+            href="https://github.com/MikesRuthless12/freally-player/releases/latest"
+            >All downloads</a
+          >
+          <p class="dl-note">
+            v0.10.1 — the first build that plays. Video output is Windows-only for now; macOS and
+            Linux open and play audio, and say plainly that their video surface is still being
+            built.
+          </p>
           <div class="os-chips">
             <span class="os-chip">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.4 10.6 4.2v7.1H3zM11.6 4 21 2.7v8.6h-9.4zM3 12.7h7.6v7.1L3 18.6zM11.6 12.7H21v8.6l-9.4-1.3z"/></svg>
@@ -66,9 +95,10 @@
           </div>
         </div>
         <p class="note">
-          The application isn't built yet — this site tracks the build toward 1.0.0. When releases ship,
-          signed installers for Windows, macOS, and Linux will appear here. Freally Player is completely
-          free — every feature included: the full player, the media library, casting, and conversion.
+          Freally Player is early — 0.10.1 is the foundation release, and this site tracks the build
+          toward 1.0.0. The installers are <strong>not code-signed yet</strong>, so Windows SmartScreen
+          and macOS Gatekeeper will warn on first run until certificates are in place. Freally Player is
+          completely free — every feature included: the full player, the media library, casting, and conversion.
         </p>
       </article>
 
@@ -115,14 +145,6 @@
       <section class="roadmap">
         <h2>Roadmap to 1.0.0</h2>
         <ol class="timeline">
-          <li>
-            <span class="badge upcoming">0.10.0</span>
-            <div>
-              <strong>Foundation &amp; the native video surface</strong>
-              <p>The Tauri + Rust shell and the key architecture: hardware-accelerated video on a native surface, composited under the modern web UI.</p>
-            </div>
-            <span class="soon now">Up next</span>
-          </li>
           <li>
             <span class="badge upcoming">0.20–0.50</span>
             <div>

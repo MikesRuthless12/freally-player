@@ -8,14 +8,56 @@ Freally Player is © 2026 Mike Weaver — All Rights Reserved (proprietary, sour
 [`LICENSE`](LICENSE)). **Project started: June 30th, 2026.** **v1.0.0 released: ______** (fill on
 release).
 
-> **Status: in development — first tagged build is `0.10.0` (foundation).** This is a
-> **developer preview, not a usable player yet**: the installers do not bundle libmpv, so a
-> downloaded build has no playback engine and says so plainly when you open a file. Building
-> from source with `--features engine-libmpv` plays video on Windows. The release ladder runs
+> **Status: in development.** `0.10.0` was tagged but **never published** — its installers had no
+> playback engine, so the draft release was discarded rather than shipped. `0.10.1` is the first
+> build that actually plays: it bundles libmpv. The release ladder runs
 > **0.10.0 → 0.20.0 → 0.30.0 → 0.40.0 → 0.50.0 → 0.60.0 → 0.70.0 → 0.80.0 → 0.85.0 (library milestone — first public) → 0.95.0 → 1.0.0**,
 > one tag per phase (see `product-roadmap.md`).
 
-## [0.10.0] — 2026-07-21
+## [0.10.1] — 2026-07-22
+
+### Added
+- **The installers bundle the playback engine, so a downloaded build plays.** On Windows
+  `libmpv-2.dll` is installed next to `freally-player.exe`; the executable imports it at **load
+  time**, which is why it must be a sibling of the binary and cannot be resolved at runtime from a
+  resource path. Both the MSI and the NSIS installer carry it.
+- A **written offer for the LGPL source** in [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md),
+  naming the exact pinned libmpv build that ships and how to replace it. Bundling the engine makes
+  that offer a live obligation rather than a statement of intent.
+- **macOS bundles libmpv's whole dependency chain into the `.app`.** Unlike Windows, where the
+  library is self-contained, the Homebrew libmpv records absolute `/opt/homebrew` paths that do not
+  exist on a user's Mac; `scripts/bundle-macos-dylibs.sh` rewrites the graph into the bundle and
+  fails the build if any absolute path survives.
+- **Linux `.deb`/`.rpm` declare a libmpv dependency** rather than vendoring one, so apt/dnf install
+  it alongside the app — the convention on those platforms.
+- **Noto is bundled, so text renders in every shipped language on every OS** — Latin, Greek,
+  Cyrillic, Vietnamese, Arabic, Devanagari and all four CJK families (Simplified and Traditional
+  Chinese, Japanese, Korean). Windows and macOS carry CJK system fonts but many Linux installs do
+  not, where CJK was previously tofu boxes. The variable builds keep the whole set to ~19 MB, and
+  `unicode-range` slicing means a Latin-only UI never loads a CJK byte. Traditional Chinese ships
+  even though it is not one of the 18 UI locales, because filenames and subtitle tracks are in
+  whatever script the *media* uses.
+- **A font smoke suite that checks what was actually rasterised** (`ui/e2e/fonts.spec.ts`), via the
+  DevTools Protocol rather than trusting `font-family`, and requiring the face to be the bundled
+  one rather than a system lookalike. It runs on all three OSes and uploads one screenshot per
+  language per platform. It immediately caught Traditional Chinese rendering in *Simplified*
+  letterforms — `:lang(zh)` matches `zh-TW` by BCP-47 prefix, so the cascade order had silently
+  inverted.
+
+### Changed (packaging)
+- **macOS ships two DMGs — Apple Silicon and Intel — instead of one universal binary.** Homebrew
+  provides only host-architecture libmpv, so a universal build's x86_64 slice cannot link against
+  an arm64 dylib. (`macos-15-intel` is the last x86_64 image GitHub Actions offers; the
+  architecture goes away around Aug 2027.)
+
+### Changed
+- **`engine-libmpv` is now a default feature of the app crate** — a plain `cargo build` produces
+  what ships, instead of an engine-less binary that looked fine until you opened a file. Building
+  the app now requires libmpv (`node scripts/vendor-libmpv.mjs`, `brew install mpv`, or
+  `apt install libmpv-dev`); the owned library crates keep their engines optional, so
+  `cargo build -p freally-player-core` still needs no media libraries.
+
+## [0.10.0] — 2026-07-21 — tagged, never published
 
 ### Added (Phase 0 — Foundation & repo)
 - Tauri v2 app shell (Rust core + React + TypeScript + Vite UI), 1200×800 dark Havoc window, no
@@ -55,9 +97,9 @@ release).
   `2026-07-21`, which re-prompts anyone who accepted the earlier text.
 
 ### Known limitations
-- **The installers ship no playback engine.** `engine-libmpv` is off by default and libmpv is not
-  yet bundled as a packaged resource, so a downloaded `0.10.0` opens, themes, and reports honestly
-  that it has no engine — it does not play media. Bundling the engine is the next release's work.
+- **The installers ship no playback engine.** `engine-libmpv` was off by default and libmpv was not
+  bundled as a packaged resource, so `0.10.0` opens, themes, and reports honestly that it has no
+  engine — it does not play media. This is why the release was never published; fixed in `0.10.1`.
 - **Video output is Windows-only.** The macOS and Linux surface hosts are not implemented; both
   report that plainly rather than showing a black stage.
 - Video is composited *over* the web UI in the stage rect rather than under a transparent webview.

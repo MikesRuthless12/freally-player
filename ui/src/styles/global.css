@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Bundled Noto + the per-language stack that `--font-freally` resolves to. */
+@import "./fonts.css";
 
 /*
  * Havoc theme tokens (shared across the Freally suite).
@@ -48,14 +50,8 @@ body {
    */
   background: var(--color-havoc-bg);
   color: var(--color-havoc-text);
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    "Helvetica Neue",
-    Arial,
-    sans-serif;
+  /* Resolves per document language — see styles/fonts.css. */
+  font-family: var(--font-freally);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
   /* Player chrome is not selectable (inputs stay selectable). */

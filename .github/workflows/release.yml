@@ -28,8 +28,6 @@ jobs:
         include:
           - os: windows-latest
             args: ""
-          - os: macos-latest
-            args: "--target universal-apple-darwin"
           - os: ubuntu-latest
             args: ""
     steps:
@@ -42,18 +40,22 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
+            libmpv-dev \
             libwebkit2gtk-4.1-dev \
             libgtk-3-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
             patchelf
 
+      # The engine is not optional here: `engine-libmpv` is a default feature of the app crate,
+      # and on Windows the vendored DLL is also a `bundle.resources` entry, so the build fails
+      # outright without it rather than silently producing an installer that cannot play.
+      - name: Vendor libmpv (Windows)
+        if: matrix.os == 'windows-latest'
+        run: node scripts/vendor-libmpv.mjs
+
       - name: Show toolchain
         run: rustup show
-
-      - name: Add macOS universal targets
-        if: matrix.os == 'macos-latest'
-        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
       - uses: Swatinem/rust-cache@v2
 
@@ -87,3 +89,103 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+  # macOS is built separately, and NOT by tauri-action, for two reasons.
+  #
+  # 1. The .app has to be patched after it is built (libmpv's dependency graph lives at
+  #    absolute Homebrew paths that do not exist on a user's Mac), and Tauri's DMG bundler
+  #    regenerates the .app unless it was produced in the same invocation — so the patch has
+  #    to sit between an `--bundles app` build and a DMG we create ourselves.
+  # 2. There is no universal build any more. Homebrew ships only host-architecture libmpv, so
+  #    a universal binary's x86_64 slice cannot link against an arm64 dylib. Two native builds
+  #    replace it. NOTE: macos-15-intel is the LAST x86_64 macOS image GitHub offers — Actions
+  #    drops the architecture around Aug 2027, at which point this matrix entry goes away.
+  #
+  # `needs: bundle` is ordering, not a dependency: it guarantees the draft release exists
+  # before this job uploads into it.
+  bundle-macos:
+    name: Bundle — macOS ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    needs: bundle
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            arch: aarch64
+            target: aarch64-apple-darwin
+          - os: macos-15-intel
+            arch: x64
+            target: x86_64-apple-darwin
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install libmpv and the bundling tools
+        run: brew install mpv dylibbundler
+
+      # Homebrew on Apple Silicon installs outside the default linker search path.
+      - name: Point the build at Homebrew's libmpv
+        run: echo "MPV_LIB_DIR=$(brew --prefix mpv)/lib" >> "$GITHUB_ENV"
+
+      - name: Show toolchain
+        run: rustup show
+      - name: Add the target
+        env:
+          TARGET: ${{ matrix.target }}
+        run: rustup target add "$TARGET"
+
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # Only the .app — the DMG is made below, after the bundle has been patched.
+      - name: Build the .app
+        env:
+          TARGET: ${{ matrix.target }}
+        run: npm run tauri build -- --target "$TARGET" --bundles app
+
+      - name: Bundle libmpv and its dependencies into the .app
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          app=$(find "target/$TARGET/release/bundle/macos" -maxdepth 1 -name '*.app' | head -1)
+          [ -n "$app" ] || { echo "::error::no .app was produced"; exit 1; }
+          chmod +x scripts/bundle-macos-dylibs.sh
+          scripts/bundle-macos-dylibs.sh "$app"
+
+      # hdiutil rather than create-dmg: create-dmg drives Finder over AppleScript to lay the
+      # window out, which needs a GUI session and is flaky on a headless runner. Staging a
+      # folder with an /Applications symlink gives the same drag-to-install DMG with no
+      # AppleScript involved.
+      - name: Create the DMG
+        env:
+          TARGET: ${{ matrix.target }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          app=$(find "target/$TARGET/release/bundle/macos" -maxdepth 1 -name '*.app' | head -1)
+          version=$(node -p "require('./package.json').version")
+          staging=$(mktemp -d)
+          cp -R "$app" "$staging/"
+          ln -s /Applications "$staging/Applications"
+          mkdir -p dist-dmg
+          dmg="dist-dmg/Freally Player_${version}_${ARCH}.dmg"
+          hdiutil create -volname "Freally Player" -srcfolder "$staging" \
+            -ov -format UDZO "$dmg"
+          echo "DMG=$dmg" >> "$GITHUB_ENV"
+
+      # The tag arrives through env, never spliced into shell source — a ref name may contain
+      # quotes, `;`, `$` and backticks.
+      - name: Upload the DMG to the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: gh release upload "$TAG" "$DMG" --clobber

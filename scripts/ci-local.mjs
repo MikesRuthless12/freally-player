@@ -65,35 +65,38 @@ if (doInstall && hasUi) {
 }
 
 if (!uiOnly && hasRust) {
-  // NOT --all-features: the `engine-libmpv` / `engine-ffmpeg` features link against system
-  // media libraries that a plain checkout does not have. Default features are the gate; the
-  // engine features get their own steps below when libmpv is actually available.
+  // NOT --all-features: `engine-ffmpeg` links against system media libraries a plain checkout
+  // does not have. `engine-libmpv` IS in the default set for the app crate — it is what ships —
+  // so `--workspace` already links libmpv and needs it present.
   step("rust: fmt", "cargo fmt --all --check", repoRoot);
   step("rust: clippy", "cargo clippy --workspace --all-targets -- -D warnings", repoRoot);
   step("rust: test", "cargo test --workspace", repoRoot);
 
-  // Mirrors the `engine` job in .github/workflows/ci.yml: the media engine and the native
-  // video surface. Skipped (not failed) when libmpv is absent, since the default build must
-  // work without it.
+  // libmpv is no longer optional for the app, so say so up front rather than letting the
+  // workspace steps fail several minutes in with a linker error.
   const hasVendoredMpv = existsSync(join(repoRoot, "third_party", "libmpv"));
   const hasSystemMpv = process.platform !== "win32" && have("pkg-config --exists mpv");
-  if (hasVendoredMpv || hasSystemMpv || process.env.MPV_LIB_DIR) {
-    step(
-      "rust: clippy (engine)",
-      "cargo clippy -p freally-player --all-targets --features engine-libmpv -- -D warnings",
-      repoRoot,
+  if (!hasVendoredMpv && !hasSystemMpv && !process.env.MPV_LIB_DIR) {
+    console.error(
+      "\n✗ no libmpv found, and the app crate links it by default — the Rust steps will fail.\n" +
+        "  Windows: node scripts/vendor-libmpv.mjs\n" +
+        "  macOS:   brew install mpv        Linux: apt install libmpv-dev\n",
     );
-    step(
-      "rust: test (engine)",
-      "cargo test -p freally-player-core --features engine-libmpv",
-      repoRoot,
-    );
-  } else {
-    console.log(
-      "• note: no libmpv found — skipping the engine checks. Run `node scripts/vendor-libmpv.mjs`\n" +
-        "        (Windows) or install libmpv-dev / `brew install mpv` to exercise them.",
-    );
+    process.exit(1);
   }
+
+  // Mirrors the `engine` job in .github/workflows/ci.yml: the media engine and the native
+  // video surface, exercised on the owned crate that still gates them behind a feature.
+  step(
+    "rust: clippy (engine)",
+    "cargo clippy -p freally-player-core --all-targets --features engine-libmpv -- -D warnings",
+    repoRoot,
+  );
+  step(
+    "rust: test (engine)",
+    "cargo test -p freally-player-core --features engine-libmpv",
+    repoRoot,
+  );
   // cargo-deny only runs when it's both configured (deny.toml) and installed.
   if (hasDeny && have("cargo deny --version")) {
     step("rust: cargo-deny", "cargo deny check", repoRoot);

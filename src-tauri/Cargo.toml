@@ -47,9 +47,18 @@ freally-convert     = { path = "../crates/convert" }
 
 [features]
 # `custom-protocol` is used by Tauri release builds.
-default = ["custom-protocol"]
+#
+# `engine-libmpv` is ON by default so a plain `cargo build` of the app produces what actually
+# ships. It was optional through P0.x, when the shipped installers had no engine and honestly
+# said so; that is no longer a state worth being able to build. The bundle now carries libmpv
+# as a resource, and `bundle.resources` is resolved by tauri-build during `cargo build` — a
+# build without the library could not produce an installer anyway.
+#
+# The *library* crates keep their engines optional, so `cargo build -p freally-player-core`
+# still works on a machine with no media libraries. Building the app needs libmpv: run
+# `node scripts/vendor-libmpv.mjs` (Windows) or install libmpv-dev / `brew install mpv`.
+default = ["custom-protocol", "engine-libmpv"]
 custom-protocol = ["tauri/custom-protocol"]
-# Pass-through to the non-owned decode/render engines in freally-player-core. Off by default
-# because they link against system libraries; P0.3 turns `engine-libmpv` on.
+# Pass-through to the non-owned decode/render engines in freally-player-core.
 engine-libmpv = ["freally-player-core/engine-libmpv"]
 engine-ffmpeg = ["freally-player-core/engine-ffmpeg"]
