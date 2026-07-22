@@ -1122,7 +1122,7 @@ dependencies = [
 
 [[package]]
 name = "freally-convert"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "log",
  "serde",
@@ -1131,7 +1131,7 @@ dependencies = [
 
 [[package]]
 name = "freally-library"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "directories",
  "log",
@@ -1142,7 +1142,7 @@ dependencies = [
 
 [[package]]
 name = "freally-player"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "chrono",
  "directories",
@@ -1167,7 +1167,7 @@ dependencies = [
 
 [[package]]
 name = "freally-player-core"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "ffmpeg-next",
  "libmpv2",
@@ -1180,7 +1180,7 @@ dependencies = [
 
 [[package]]
 name = "freally-streaming"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "log",
  "mdns-sd",
@@ -1191,7 +1191,7 @@ dependencies = [
 
 [[package]]
 name = "freally-subtitles"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "log",
  "serde",

@@ -24,7 +24,7 @@ members = [
 # Shared dependency versions are pinned here and inherited by member crates via
 # `<dep>.workspace = true`. Versions are indicative for planning; lockfile is source of truth.
 [workspace.package]
-version = "0.10.0"
+version = "0.10.1"
 authors = ["Mike Weaver <mythodikalone@gmail.com>"]
 edition = "2021"
 rust-version = "1.82"

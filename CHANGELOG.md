@@ -14,7 +14,7 @@ release).
 > **0.10.0 → 0.20.0 → 0.30.0 → 0.40.0 → 0.50.0 → 0.60.0 → 0.70.0 → 0.80.0 → 0.85.0 (library milestone — first public) → 0.95.0 → 1.0.0**,
 > one tag per phase (see `product-roadmap.md`).
 
-## [Unreleased] — 0.10.1
+## [0.10.1] — 2026-07-22
 
 ### Added
 - **The installers bundle the playback engine, so a downloaded build plays.** On Windows
@@ -30,6 +30,19 @@ release).
   fails the build if any absolute path survives.
 - **Linux `.deb`/`.rpm` declare a libmpv dependency** rather than vendoring one, so apt/dnf install
   it alongside the app — the convention on those platforms.
+- **Noto is bundled, so text renders in every shipped language on every OS** — Latin, Greek,
+  Cyrillic, Vietnamese, Arabic, Devanagari and all four CJK families (Simplified and Traditional
+  Chinese, Japanese, Korean). Windows and macOS carry CJK system fonts but many Linux installs do
+  not, where CJK was previously tofu boxes. The variable builds keep the whole set to ~19 MB, and
+  `unicode-range` slicing means a Latin-only UI never loads a CJK byte. Traditional Chinese ships
+  even though it is not one of the 18 UI locales, because filenames and subtitle tracks are in
+  whatever script the *media* uses.
+- **A font smoke suite that checks what was actually rasterised** (`ui/e2e/fonts.spec.ts`), via the
+  DevTools Protocol rather than trusting `font-family`, and requiring the face to be the bundled
+  one rather than a system lookalike. It runs on all three OSes and uploads one screenshot per
+  language per platform. It immediately caught Traditional Chinese rendering in *Simplified*
+  letterforms — `:lang(zh)` matches `zh-TW` by BCP-47 prefix, so the cascade order had silently
+  inverted.
 
 ### Changed (packaging)
 - **macOS ships two DMGs — Apple Silicon and Intel — instead of one universal binary.** Homebrew
