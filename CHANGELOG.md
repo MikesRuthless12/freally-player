@@ -8,14 +8,16 @@ Freally Player is © 2026 Mike Weaver — All Rights Reserved (proprietary, sour
 [`LICENSE`](LICENSE)). **Project started: June 30th, 2026.** **v1.0.0 released: ______** (fill on
 release).
 
-> **Status: in development.** Phase 0 is built and green on Windows/macOS/Linux CI; no releases exist yet;
-> **downloads will be available in future releases.** The release ladder runs
+> **Status: in development — first tagged build is `0.10.0` (foundation).** This is a
+> **developer preview, not a usable player yet**: the installers do not bundle libmpv, so a
+> downloaded build has no playback engine and says so plainly when you open a file. Building
+> from source with `--features engine-libmpv` plays video on Windows. The release ladder runs
 > **0.10.0 → 0.20.0 → 0.30.0 → 0.40.0 → 0.50.0 → 0.60.0 → 0.70.0 → 0.80.0 → 0.85.0 (library milestone — first public) → 0.95.0 → 1.0.0**,
 > one tag per phase (see `product-roadmap.md`).
 
-## [Unreleased]
+## [0.10.0] — 2026-07-21
 
-### Added (Phase 0 — Foundation & repo → 0.10.0, unreleased)
+### Added (Phase 0 — Foundation & repo)
 - Tauri v2 app shell (Rust core + React + TypeScript + Vite UI), 1200×800 dark Havoc window, no
   console window on Windows release builds.
 - **The native video surface — the key architecture decision, working.** libmpv decodes into a
@@ -52,7 +54,15 @@ release).
   accepted, so it must not promise capabilities the product does not ship. `EULA_VERSION` bumped to
   `2026-07-21`, which re-prompts anyone who accepted the earlier text.
 
+### Known limitations
+- **The installers ship no playback engine.** `engine-libmpv` is off by default and libmpv is not
+  yet bundled as a packaged resource, so a downloaded `0.10.0` opens, themes, and reports honestly
+  that it has no engine — it does not play media. Bundling the engine is the next release's work.
+- **Video output is Windows-only.** The macOS and Linux surface hosts are not implemented; both
+  report that plainly rather than showing a black stage.
+- Video is composited *over* the web UI in the stage rect rather than under a transparent webview.
+
 ---
 
-_No public releases yet. Each shipped phase will move its highlights from the roadmap into a dated
-release section here and on the [project site](https://mikesruthless12.github.io/freally-player/)._
+_Each shipped phase moves its highlights from the roadmap into a dated release section here and on
+the [project site](https://mikesruthless12.github.io/freally-player/)._
