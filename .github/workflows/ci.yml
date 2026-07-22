@@ -97,6 +97,7 @@ jobs:
             x11-utils \
             x11-apps \
             openbox \
+            dbus-x11 \
             libgl1-mesa-dri
 
       - name: Install libmpv (macOS)
@@ -140,7 +141,10 @@ jobs:
           export WEBKIT_DISABLE_COMPOSITING_MODE=1
           export WEBKIT_DISABLE_DMABUF_RENDERER=1
           export LIBGL_ALWAYS_SOFTWARE=1
-          ./target/debug/freally-player > app.log 2>&1 &
+          # A D-Bus session bus is load-bearing: WebKitGTK spawns its WebProcess over D-Bus,
+          # and without a bus the window maps at the right size but never paints — exactly
+          # the "window exists, capture is one flat colour" symptom.
+          dbus-run-session -- ./target/debug/freally-player > app.log 2>&1 &
           APP_PID=$!
           sleep 30
 
