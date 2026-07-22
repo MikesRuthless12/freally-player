@@ -253,7 +253,7 @@ test("15 — Settings modal, General with minimize to tray", async ({ page }) =>
 
   // Two-pane shell: category sidebar on the left, the selected pane on the right. Scoped to
   // the dialog — "About" also names the title-bar icon that opened it.
-  for (const category of ["General", "Appearance", "About"]) {
+  for (const category of ["General", "Appearance", "Language", "About"]) {
     await expect(dialog.getByRole("button", { name: category, exact: true })).toBeVisible();
   }
   const tray = dialog.getByRole("checkbox", { name: /Minimize to system tray/ });
@@ -263,7 +263,8 @@ test("15 — Settings modal, General with minimize to tray", async ({ page }) =>
   await tray.click();
   await expect.poll(() => invoked(page)).toContain("settings_set");
   expect(await lastArgs(page, "settings_set")).toEqual({
-    settings: { theme: "dark", minimizeToTray: true },
+    // `language: null` — nothing chosen yet, so the UI is still following the OS.
+    settings: { theme: "dark", minimizeToTray: true, language: null },
   });
 
   await page.screenshot({ path: `${DIR}/15-settings-general.png` });
@@ -278,8 +279,15 @@ test("16 — Settings modal, Appearance and About panes", async ({ page }) => {
   await dialog.waitFor({ timeout: 10_000 });
 
   await dialog.getByRole("button", { name: "Appearance", exact: true }).click();
-  await expect(dialog.getByRole("button", { name: "dark", exact: true })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Dark", exact: true })).toBeVisible();
   await page.screenshot({ path: `${DIR}/16-settings-appearance.png` });
+
+  // The Language pane. Switching languages is driven exhaustively in `languages.spec.ts`;
+  // this is the gallery's photograph of the picker sitting in the modal.
+  await dialog.getByRole("button", { name: "Language", exact: true }).click();
+  await expect(dialog.getByRole("button", { name: "English", exact: true })).toBeVisible();
+  await expect(dialog.locator("button[lang]")).toHaveCount(18);
+  await page.screenshot({ path: `${DIR}/16c-settings-language.png` });
 
   await dialog.getByRole("button", { name: "About", exact: true }).click();
   await expect(dialog.getByText(/All Rights Reserved/)).toBeVisible();

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { useT } from "../i18n";
+import { LOCALES } from "../i18n/locales";
 import { settingsSet } from "../ipc/commands";
 import type { AppInfo, Theme, UserSettings } from "../ipc/types";
 
@@ -15,14 +17,8 @@ import type { AppInfo, Theme, UserSettings } from "../ipc/types";
  *
  * Every control here is a REAL setting that persists — nothing decorative.
  */
-const CATEGORIES = ["general", "appearance", "about"] as const;
+const CATEGORIES = ["general", "appearance", "language", "about"] as const;
 export type CategoryId = (typeof CATEGORIES)[number];
-
-const CATEGORY_LABELS: Record<CategoryId, string> = {
-  general: "General",
-  appearance: "Appearance",
-  about: "About",
-};
 
 export function SettingsModal({
   settings,
@@ -38,6 +34,7 @@ export function SettingsModal({
   onChange: (next: UserSettings) => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const [category, setCategory] = useState<CategoryId>(initialCategory);
   const [error, setError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -87,14 +84,14 @@ export function SettingsModal({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Settings"
+        aria-label={t("settings-title")}
         tabIndex={-1}
         className="flex h-[30rem] w-full max-w-3xl overflow-hidden rounded-xl border border-havoc-border bg-havoc-panel outline-none"
       >
         {/* Sidebar */}
         <nav
-          aria-label="Settings categories"
-          className="flex w-44 shrink-0 flex-col gap-0.5 border-r border-havoc-border bg-havoc-surface p-2"
+          aria-label={t("settings-categories")}
+          className="flex w-44 shrink-0 flex-col gap-0.5 border-e border-havoc-border bg-havoc-surface p-2"
         >
           {CATEGORIES.map((id) => (
             <button
@@ -102,13 +99,13 @@ export function SettingsModal({
               type="button"
               onClick={() => setCategory(id)}
               aria-current={category === id ? "page" : undefined}
-              className={`rounded-md px-3 py-2 text-left text-xs transition-colors ${
+              className={`rounded-md px-3 py-2 text-start text-xs transition-colors ${
                 category === id
                   ? "bg-havoc-accent/20 font-semibold text-havoc-text"
                   : "text-havoc-muted hover:bg-havoc-panel hover:text-havoc-text"
               }`}
             >
-              {CATEGORY_LABELS[id]}
+              {t(`settings-${id}`)}
             </button>
           ))}
         </nav>
@@ -116,22 +113,22 @@ export function SettingsModal({
         {/* Pane */}
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex items-center justify-between border-b border-havoc-border px-4 py-2.5">
-            <h2 className="m-0 text-sm font-bold text-havoc-text">{CATEGORY_LABELS[category]}</h2>
+            <h2 className="m-0 text-sm font-bold text-havoc-text">{t(`settings-${category}`)}</h2>
             <button
               type="button"
               onClick={onClose}
               className="rounded-md border border-havoc-border px-3 py-1 text-xs text-havoc-muted hover:border-havoc-accent hover:text-havoc-text"
             >
-              Close
+              {t("settings-close")}
             </button>
           </div>
 
           <div className="min-h-0 flex-1 overflow-auto px-4 py-3 text-xs text-havoc-text">
             {category === "general" && (
-              <Section title="Window" hint="How Freally Player behaves when you put it away.">
+              <Section title={t("settings-window-title")} hint={t("settings-window-hint")}>
                 <Toggle
-                  label="Minimize to system tray"
-                  hint="Minimising hides the window and leaves a tray icon. Click the icon to bring it back."
+                  label={t("settings-tray-label")}
+                  hint={t("settings-tray-hint")}
                   checked={settings.minimizeToTray}
                   onChange={(minimizeToTray) => apply({ ...settings, minimizeToTray })}
                 />
@@ -139,7 +136,7 @@ export function SettingsModal({
             )}
 
             {category === "appearance" && (
-              <Section title="Theme" hint="Dark is the Havoc default.">
+              <Section title={t("settings-theme-title")} hint={t("settings-theme-hint")}>
                 <div className="flex gap-2">
                   {(["dark", "light"] as const).map((mode) => (
                     <button
@@ -147,13 +144,42 @@ export function SettingsModal({
                       type="button"
                       onClick={() => apply({ ...settings, theme: mode as Theme })}
                       aria-pressed={settings.theme === mode}
-                      className={`rounded-md border px-3 py-1.5 text-xs capitalize ${
+                      className={`rounded-md border px-3 py-1.5 text-xs ${
                         settings.theme === mode
                           ? "border-havoc-accent bg-havoc-accent/15 font-semibold text-havoc-text"
                           : "border-havoc-border text-havoc-muted hover:border-havoc-accent hover:text-havoc-text"
                       }`}
                     >
-                      {mode}
+                      {t(`settings-theme-${mode}`)}
+                    </button>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {category === "language" && (
+              <Section title={t("settings-language-title")} hint={t("settings-language-hint")}>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {LOCALES.map(({ code, autonym }) => (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => apply({ ...settings, language: code })}
+                      aria-pressed={settings.language === code}
+                      // Each name is written in its OWN language, so it needs its own `lang`:
+                      // `styles/fonts.css` keys the per-script font stack off `:lang()`, and
+                      // without this the whole list would draw in the current UI language's
+                      // stack — rendering 日本語 in Simplified Chinese letterforms next to
+                      // 简体中文. `dir="auto"` puts العربية the right way round in an LTR list.
+                      lang={code}
+                      dir="auto"
+                      className={`truncate rounded-md border px-2.5 py-1.5 text-xs ${
+                        settings.language === code
+                          ? "border-havoc-accent bg-havoc-accent/15 font-semibold text-havoc-text"
+                          : "border-havoc-border text-havoc-muted hover:border-havoc-accent hover:text-havoc-text"
+                      }`}
+                    >
+                      {autonym}
                     </button>
                   ))}
                 </div>
@@ -161,17 +187,14 @@ export function SettingsModal({
             )}
 
             {category === "about" && (
-              <Section
-                title="Freally Player"
-                hint="Plays anything. Beautifully. No ads, no spyware."
-              >
+              <Section title="Freally Player" hint={t("settings-about-hint")}>
                 <dl className="grid grid-cols-[8rem_1fr] gap-y-1.5 text-[11px]">
-                  <dt className="text-havoc-muted">Version</dt>
+                  <dt className="text-havoc-muted">{t("settings-about-version")}</dt>
                   <dd className="m-0 font-mono">{info ? info.version : "…"}</dd>
-                  <dt className="text-havoc-muted">Licence</dt>
-                  <dd className="m-0">© 2026 Mike Weaver — All Rights Reserved</dd>
-                  <dt className="text-havoc-muted">Privacy</dt>
-                  <dd className="m-0">No ads, no telemetry, no analytics, no account.</dd>
+                  <dt className="text-havoc-muted">{t("settings-about-licence")}</dt>
+                  <dd className="m-0">{t("settings-about-rights")}</dd>
+                  <dt className="text-havoc-muted">{t("settings-about-privacy")}</dt>
+                  <dd className="m-0">{t("settings-about-privacy-value")}</dd>
                 </dl>
               </Section>
             )}

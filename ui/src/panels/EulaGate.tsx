@@ -1,6 +1,7 @@
 import { exit } from "@tauri-apps/plugin-process";
 import { Fragment, type ReactElement, type ReactNode, useEffect, useRef, useState } from "react";
 
+import { useT } from "../i18n";
 import { eulaAccept } from "../ipc/commands";
 import type { EulaStatus } from "../ipc/types";
 
@@ -98,6 +99,7 @@ function renderMarkdown(text: string): ReactElement[] {
  * again only if the EULA version changes).
  */
 export function EulaGate({ status, onAccepted }: { status: EulaStatus; onAccepted: () => void }) {
+  const t = useT();
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,18 +137,21 @@ export function EulaGate({ status, onAccepted }: { status: EulaStatus; onAccepte
       <div className="flex max-h-full w-full max-w-3xl flex-col gap-3 rounded-xl border border-havoc-border bg-havoc-panel p-5">
         <div className="flex items-baseline justify-between gap-2">
           <h1 className="m-0 bg-gradient-to-r from-havoc-accent to-havoc-accent-2 bg-clip-text text-lg font-bold tracking-wide text-transparent">
-            Freally Player — End User License Agreement
+            {t("eula-heading")}
           </h1>
           <span className="shrink-0 font-mono text-[10px] text-havoc-muted">
-            Version {status.version}
+            {t("eula-version", { version: status.version })}
           </span>
         </div>
-        <p className="m-0 text-xs leading-relaxed text-havoc-muted">
-          Please read and accept the agreement below to use Freally Player.
-        </p>
+        <p className="m-0 text-xs leading-relaxed text-havoc-muted">{t("eula-intro")}</p>
+        {/* The agreement itself is always English — it is the document that legally binds, so
+            it is never translated. Direction follows the CONTENT, not the UI: without this the
+            Arabic shell would lay English legal text out right-to-left. */}
         <div
           ref={scrollRef}
           onScroll={onScroll}
+          lang="en"
+          dir="ltr"
           className="min-h-0 flex-1 overflow-auto rounded-lg border border-havoc-border bg-havoc-surface p-3 text-[11px] leading-relaxed text-havoc-muted"
         >
           {renderMarkdown(status.text)}
@@ -158,9 +163,7 @@ export function EulaGate({ status, onAccepted }: { status: EulaStatus; onAccepte
         )}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-[10px] text-havoc-muted">
-            {scrolledToEnd
-              ? "Thanks for reading."
-              : "Scroll to the end of the agreement to continue."}
+            {scrolledToEnd ? t("eula-scrolled") : t("eula-scroll-prompt")}
           </span>
           <div className="flex gap-2">
             <button
@@ -168,7 +171,7 @@ export function EulaGate({ status, onAccepted }: { status: EulaStatus; onAccepte
               onClick={() => void exit(0)}
               className="rounded-md border border-havoc-border px-3 py-1.5 text-xs text-havoc-muted hover:border-red-400/60 hover:text-red-400"
             >
-              Decline &amp; Quit
+              {t("eula-decline")}
             </button>
             <button
               type="button"
@@ -176,7 +179,7 @@ export function EulaGate({ status, onAccepted }: { status: EulaStatus; onAccepte
               disabled={!scrolledToEnd || busy}
               className="rounded-md border border-havoc-accent bg-havoc-accent/15 px-3 py-1.5 text-xs font-semibold text-havoc-text hover:bg-havoc-accent/25 disabled:opacity-40"
             >
-              I Agree
+              {t("eula-agree")}
             </button>
           </div>
         </div>

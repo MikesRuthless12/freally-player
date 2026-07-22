@@ -44,7 +44,10 @@ home.
    sidecar, and **cast to / act as** a Chromecast/DLNA/UPnP renderer.
 6. **Does the extras** — convert/transcode presets, record streams, **GIF/short-clip** export, a
    media-info panel, sleep timer, **mini-player / Picture-in-Picture**, **media keys + global
-   hotkeys**, fully customizable keybindings, skins/themes (Havoc dark default), and portable mode.
+   hotkeys**, fully customizable keybindings, skins/themes (Havoc dark default), portable mode, and
+   an **18-language UI** — `ar de en es fr hi id it ja ko nl pl pt-BR ru tr uk vi zh-CN` — switched
+   from Settings without a restart, right-to-left for Arabic, with the fonts for every one of those
+   scripts bundled so nothing falls back to tofu boxes offline.
 
 It's the **modern VLC** — plays everything, hardware-accelerated, with a library, streaming, casting,
 and great subtitles — **without the ads, the spyware, or the dated UI**. Things it can't do
@@ -120,8 +123,13 @@ node scripts/ci-local.mjs        # mirrors .github/workflows/ci.yml
 ```
 
 It runs every check CI runs on this OS: `cargo fmt --check`, `clippy -D warnings`,
-`cargo test`, the UI's lint/format/typecheck/tests, and the `engine-libmpv` checks when
-libmpv is available. Pushing to find out what CI thinks costs ~6 minutes a round trip.
+`cargo test`, the UI's lint/format/typecheck/tests, the translation-catalog gate
+(`npm run i18n:lint`), and the `engine-libmpv` checks when libmpv is available. Pushing to find
+out what CI thinks costs ~6 minutes a round trip.
+
+Adding a user-visible string means adding it to **all 18 catalogs** in `ui/src/i18n/`, in the same
+change — `i18n:lint` fails the build on a key that is in one catalog and missing from another, and
+a half-translated locale is invisible to every other check.
 
 What it **cannot** tell you: your machine is one OS. Cross-platform breakage — a `#[cfg]` that
 only compiles on Windows, a dead-code warning that only fires elsewhere, a test that races on a

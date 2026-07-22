@@ -14,6 +14,13 @@ export interface UserSettings {
   theme: Theme;
   /** Minimising hides to the system tray instead of the taskbar. */
   minimizeToTray: boolean;
+  /**
+   * The chosen UI locale as a BCP-47 tag, or `null` when the user has never picked one — in
+   * which case the first run detects it from the OS. Rust keeps this a plain `Option<String>`
+   * and does not police the value: the catalogs are the source of truth for which locales
+   * exist, and they live in the UI, which falls back to English for anything it does not ship.
+   */
+  language: string | null;
 }
 
 /** `eula_status` — the embedded agreement plus whether this version is accepted. */

@@ -14,6 +14,48 @@ release).
 > **0.10.0 → 0.20.0 → 0.30.0 → 0.40.0 → 0.50.0 → 0.60.0 → 0.70.0 → 0.80.0 → 0.85.0 (library milestone — first public) → 0.95.0 → 1.0.0**,
 > one tag per phase (see `product-roadmap.md`).
 
+## [Unreleased]
+
+### Added
+- **The UI is translated into all 18 shipped languages** (`ar de en es fr hi id it ja ko nl pl
+  pt-BR ru tr uk vi zh-CN`), with a **Language pane in Settings** that switches instantly — no
+  restart, no reload, no request. Every user-visible string now goes through a Fluent catalog in
+  [`ui/src/i18n/`](ui/src/i18n); all 18 catalogs are bundled at build time, which is what makes
+  the switch instant and offline. Pulled forward from Phase 10 (`P10.3`) on purpose: the Phase 0
+  UI has few strings, so translating now is cheap, and DoD 6c keeps every later phase current
+  instead of letting ten phases of translation debt pile up.
+- **First-run locale detection.** With nothing stored, the app takes the OS's preferred language;
+  `pt-PT` lands on `pt-BR` and `zh-TW` on `zh-CN` rather than dropping to English, because a
+  language the user reads beats one they may not.
+- **Right-to-left for Arabic.** Selecting it mirrors the whole shell — sidebar, title-bar
+  controls, transport, footer — via CSS logical properties and `dir` on the document root.
+- **`npm run i18n:lint`, and a CI job step that runs it** (DoD 6c(a)). It fails on a key present
+  in one catalog and missing from another, a `t()` key the source asks for and no catalog has, a
+  translation that drops or invents a `{ $placeholder }`, a locale with no catalog file, and a
+  catalog Fluent cannot parse.
+- **A language smoke suite** (`ui/e2e/languages.spec.ts`) that drives the real Settings modal,
+  switches into each of the 18 languages in turn, asserts the chrome actually changed into it —
+  against strings read from the catalogs, not copied into the test — and screenshots each one, on
+  all three OSes.
+- A **`language` field in `settings.json`**, absent until the user picks one. A settings file
+  written before this existed still loads, with every other preference intact.
+
+### Changed
+- The **language picker lists English first, then the other 17 alphabetically by their own name**,
+  in that same order in every language. The order is a baked-in literal, not a runtime sort:
+  collation is locale-sensitive, so sorting live would rearrange the picker under the user each
+  time they switched — Arabic lifts العربية to the top, Russian lifts Cyrillic, Chinese lifts the
+  CJK names. Across the 18 locales that produces five different orders.
+- The Appearance pane's theme buttons now read **Dark**/**Light**. They were lowercase strings
+  capitalised by CSS, so the visible label and the screen-reader label disagreed.
+
+### Notes
+- **The agreement text and the bug report stay in English, deliberately.** The EULA is the
+  document that legally binds, so a translated copy would not be the one that applies. The bug
+  report preview is headed "exactly what will be sent" and mirrors the English body Rust builds
+  for whoever reads it — localising the preview would make that heading untrue. Both are marked
+  `dir="ltr"` so the Arabic shell does not lay English text out right-to-left.
+
 ## [0.10.1] — 2026-07-22
 
 ### Added
