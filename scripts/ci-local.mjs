@@ -1,5 +1,13 @@
 #!/usr/bin/env node
-// Local CI — run the SAME checks you'd want green before pushing.
+// Local CI — mirrors .github/workflows/ci.yml. Run this and get it GREEN BEFORE PUSHING.
+//
+// This is a Definition-of-Done step, not a convenience: pushing to find out what CI thinks
+// costs ~6 minutes per attempt, and every failure it catches here is one you would otherwise
+// wait on GitHub to discover.
+//
+// What it CANNOT tell you: this machine is one OS. Cross-platform breakage — a `#[cfg]` that
+// only compiles on Windows, a dead-code warning that only fires elsewhere — still shows up
+// first on the CI matrix. Green here means "worth pushing", not "CI will pass".
 //
 // NOTE: This repo has no .github/workflows yet (planning-stage skeleton). It is a
 // Rust-only Cargo workspace with a pinned toolchain (rustfmt + clippy — see
@@ -21,7 +29,7 @@
 //   --no-e2e     skip the Playwright e2e step (only relevant once a UI exists)
 //   --install    (re)install UI deps first: npm ci + playwright browsers
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -57,9 +65,35 @@ if (doInstall && hasUi) {
 }
 
 if (!uiOnly && hasRust) {
+  // NOT --all-features: the `engine-libmpv` / `engine-ffmpeg` features link against system
+  // media libraries that a plain checkout does not have. Default features are the gate; the
+  // engine features get their own steps below when libmpv is actually available.
   step("rust: fmt", "cargo fmt --all --check", repoRoot);
-  step("rust: clippy", "cargo clippy --workspace --all-targets --all-features -- -D warnings", repoRoot);
-  step("rust: test", "cargo test --workspace --all-features", repoRoot);
+  step("rust: clippy", "cargo clippy --workspace --all-targets -- -D warnings", repoRoot);
+  step("rust: test", "cargo test --workspace", repoRoot);
+
+  // Mirrors the `engine` job in .github/workflows/ci.yml: the media engine and the native
+  // video surface. Skipped (not failed) when libmpv is absent, since the default build must
+  // work without it.
+  const hasVendoredMpv = existsSync(join(repoRoot, "third_party", "libmpv"));
+  const hasSystemMpv = process.platform !== "win32" && have("pkg-config --exists mpv");
+  if (hasVendoredMpv || hasSystemMpv || process.env.MPV_LIB_DIR) {
+    step(
+      "rust: clippy (engine)",
+      "cargo clippy -p freally-player --all-targets --features engine-libmpv -- -D warnings",
+      repoRoot,
+    );
+    step(
+      "rust: test (engine)",
+      "cargo test -p freally-player-core --features engine-libmpv",
+      repoRoot,
+    );
+  } else {
+    console.log(
+      "• note: no libmpv found — skipping the engine checks. Run `node scripts/vendor-libmpv.mjs`\n" +
+        "        (Windows) or install libmpv-dev / `brew install mpv` to exercise them.",
+    );
+  }
   // cargo-deny only runs when it's both configured (deny.toml) and installed.
   if (hasDeny && have("cargo deny --version")) {
     step("rust: cargo-deny", "cargo deny check", repoRoot);
@@ -71,12 +105,22 @@ if (!uiOnly && hasRust) {
 }
 
 if (!rustOnly && hasUi) {
-  step("ui: typecheck", "npm run typecheck", uiDir);
-  step("ui: lint", "npm run lint", uiDir);
-  step("ui: test", "npm run test", uiDir);
-  step("ui: i18n:lint", "npm run i18n:lint", uiDir);
+  // Only run scripts ui/package.json actually defines. Several land in later phases
+  // (`i18n:lint` in Phase 10, `test:e2e` with the Playwright visual-smoke gate before 1.0),
+  // and `npm run <missing>` fails the whole gate rather than reporting "not yet".
+  const uiScripts = JSON.parse(readFileSync(join(uiDir, "package.json"), "utf8")).scripts ?? {};
+  const uiStep = (label, script) => {
+    if (script in uiScripts) step(`ui: ${label}`, `npm run ${script}`, uiDir);
+    else console.log(`• note: ui has no "${script}" script yet — skipping.`);
+  };
+
+  uiStep("typecheck", "typecheck");
+  uiStep("lint", "lint");
+  uiStep("format", "format:check");
+  uiStep("test", "test");
+  uiStep("i18n:lint", "i18n:lint");
   if (!noE2e) {
-    step("ui: e2e", "npm run test:e2e", uiDir);
+    uiStep("e2e", "test:e2e");
   } else {
     console.log("• note: --no-e2e — skipping Playwright e2e.");
   }

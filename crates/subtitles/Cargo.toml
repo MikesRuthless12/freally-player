@@ -1,5 +1,5 @@
 # freally-subtitles — owned subtitle pipeline: parse, sync, manage around the engine's renderer.
-# Online fetch (OpenSubtitles) and on-device STT are opt-in; subtitle files are untrusted input.
+# Online fetch (OpenSubtitles) is opt-in; subtitle files are untrusted input.
 [package]
 name = "freally-subtitles"
 version.workspace = true

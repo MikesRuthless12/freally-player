@@ -36,8 +36,8 @@ take an action that needs it — specifically:
   or paste a YouTube/site URL (played via the **yt-dlp** sidecar);
 - **Casting / DLNA on your local network** — when you cast to, or share with, a
   device on your LAN;
-- **Optional component downloads** — the **yt-dlp** tool and the optional
-  **speech-to-text** model, fetched on demand from their third-party distributors;
+- **Optional component downloads** — the **yt-dlp** tool, fetched on demand from
+  its third-party distributor;
 - **Update checks** — the only contact with a Havoc Software endpoint, and it is
   minimal.
 
@@ -49,6 +49,31 @@ destination you chose (for casting, only on your own LAN). Optional-component
 downloads transfer the component **to** your machine and send **no personal data
 or media** beyond the standard network request needed to fetch the file. Those
 third-party services and distributors have their own privacy practices.
+
+## Crash reports and bug reporting
+Freally Player has **no crash telemetry**. Nothing is ever sent automatically.
+
+If the app closes unexpectedly, it writes a crash report **to a file on your own
+machine** and offers to show it to you on the next launch. You can also open
+**Report a bug** yourself at any time. In both cases:
+
+- The report is **shown to you in full, exactly as it would be sent**, before
+  anything happens.
+- Submitting is an **explicit click**, and it only opens a **pre-filled draft** —
+  a GitHub issue, a Gmail compose window, or your own mail client. **You** press
+  send. There is no server operated by the Licensor and no credentials ship with
+  the app.
+- The report contains only your own description, the app version, and your OS and
+  CPU architecture — plus, if you include it, the crash excerpt. Your **home
+  directory path and username are redacted** from that excerpt. It never contains
+  your media, file contents, library, or file paths.
+- **One deliberate exception to "no identifiers":** a crash excerpt is stamped
+  with when the crash happened, in your local time **including its UTC offset**,
+  and in UTC. The offset narrows you to a timezone, which is weakly identifying.
+  It is included because a crash reported days later cannot otherwise be ordered
+  or correlated — and you read the exact text before it is sent anywhere.
+- If you never submit, the report stays on your machine, and **Dismiss crash**
+  deletes it.
 
 ## No ads, no tracking
 Freally Player contains **no advertising, no ad SDKs, no trackers, and no

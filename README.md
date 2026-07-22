@@ -9,10 +9,14 @@ home.
 
 > **Plays anything. Beautifully. No ads, no spyware.**
 
-> **Status: pre-development (planning).** This public repository holds the **public site** (`docs/`)
-> and project info. The detailed planning + design set (product vision, PRD, roadmap, build-prompts
-> guide, competition guide, and go-to-market plan) is **maintained privately** and is not published
-> here. The application itself is not built yet — **downloads will be available in future releases.**
+> **Status: in development — Phase 0 (foundation) building toward `0.10.0`. No releases yet.**
+> The app builds and runs: libmpv decodes into a native GPU surface, driven through its render
+> API and composited with the React UI, so decoded video never crosses the IPC boundary. Video
+> output currently works on **Windows**; the macOS and Linux surface hosts are not implemented
+> yet and say so plainly in-app rather than showing a black screen. The detailed planning +
+> design set (product vision, PRD, roadmap, build-prompts guide, competition guide, and
+> go-to-market plan) is **maintained privately** and is not published here.
+> **Downloads will be available in future releases.**
 
 > **🔒 Local-first, private by design — and no ads, ever.** All playback, the media library, and
 > editing run **100% offline** and **on your machine**. There is **no telemetry, no analytics, and no
@@ -89,25 +93,38 @@ watch history never leave your machine. To report a vulnerability, see [`SECURIT
 ## Build & run
 
 ```sh
-# Web UI dev + Rust shell together (Tauri v2):
-npm install                 # install the React+TypeScript+Vite UI deps (in src-tauri/ui)
-cargo tauri dev             # builds the UI + Rust core, opens the player window
+npm install                       # UI deps (npm workspace root; the UI lives in ./ui)
+node scripts/vendor-libmpv.mjs    # fetch libmpv (Windows; elsewhere use the package manager)
 
-cargo tauri build           # optimized, packaged build per OS (installer artifacts)
+npm run tauri dev                 # builds the UI + Rust core, opens the player window
+npm run tauri build               # optimized, packaged build per OS (installer artifacts)
 ```
+
+The media engine is **optional at build time**: without `--features engine-libmpv` the app
+builds and runs with no media libraries installed and reports plainly that it has no playback
+engine. On macOS/Linux libmpv comes from the package manager (`brew install mpv`,
+`apt install libmpv-dev`); on Windows there is no system libmpv, so `vendor-libmpv.mjs` fetches
+a SHA-256-pinned build and generates the MSVC import library the upstream package omits.
 
 The downloadable **Windows** build is a **GUI app with no console window**.
 
 ## Develop
 
+**Run the local CI gate before pushing — it must be green:**
+
 ```sh
-cargo fmt --all -- --check                   # CI format check
-cargo clippy --all-targets -- -D warnings    # lint (warnings = errors)
-cargo test                                   # Rust tests (incl. bounded-decode fixtures)
-npm run lint && npm run typecheck            # UI lint + tsc --noEmit
+node scripts/ci-local.mjs        # mirrors .github/workflows/ci.yml
 ```
 
-These mirror what CI runs (`.github/workflows/ci.yml`) on Windows, macOS, and Linux.
+It runs every check CI runs on this OS: `cargo fmt --check`, `clippy -D warnings`,
+`cargo test`, the UI's lint/format/typecheck/tests, and the `engine-libmpv` checks when
+libmpv is available. Pushing to find out what CI thinks costs ~6 minutes a round trip.
+
+What it **cannot** tell you: your machine is one OS. Cross-platform breakage — a `#[cfg]` that
+only compiles on Windows, a dead-code warning that only fires elsewhere, a test that races on a
+slower runner — still surfaces first on the CI matrix. Green locally means "worth pushing",
+not "CI will pass". When CI catches something local CI *could* have caught, add it to
+`scripts/ci-local.mjs`.
 
 ## Packaging (per-OS installable artifact)
 

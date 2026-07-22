@@ -16,7 +16,7 @@ members = [
     "src-tauri",
     "crates/player",      # freally-player-core — playback orchestration over libmpv/ffmpeg
     "crates/library",     # freally-library     — media library, scraping, watch-state (SQLite)
-    "crates/subtitles",   # freally-subtitles   — SRT/ASS/SSA/PGS/VobSub/WebVTT + fetch + STT
+    "crates/subtitles",   # freally-subtitles   — SRT/ASS/SSA/PGS/VobSub/WebVTT + online fetch
     "crates/streaming",   # freally-streaming   — network streams, casting/DLNA, yt-dlp sidecar
     "crates/convert",     # freally-convert     — transcode presets, clip/record, GIF export
 ]
@@ -24,7 +24,7 @@ members = [
 # Shared dependency versions are pinned here and inherited by member crates via
 # `<dep>.workspace = true`. Versions are indicative for planning; lockfile is source of truth.
 [workspace.package]
-version = "0.1.0"
+version = "0.10.0"
 authors = ["Mike Weaver <mythodikalone@gmail.com>"]
 edition = "2021"
 rust-version = "1.82"
@@ -34,13 +34,26 @@ homepage = "https://mikesruthless12.github.io/freally-player/"
 
 [workspace.dependencies]
 # --- Desktop shell (non-owned, MIT/Apache) ---
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-build = { version = "2" }
+# Lets the UI exit the app (the EULA gate's "Decline & Quit").
+tauri-plugin-process = "2"
+# Native "open media" file picker — the web layer never touches the filesystem itself.
+tauri-plugin-dialog = "2"
 
 # --- Media engine (non-owned; primary decode/render + coverage) ---
 # libmpv via its render API is the primary playback engine; ffmpeg/libav* for coverage and
 # conversion. These are kept behind the player-core `Engine` interface.
 libmpv2 = "4"            # libmpv (mpv) bindings incl. render API  (libmpv-rs successor)
+# Win32 for the native video surface: the child window + its WGL OpenGL context that mpv's
+# render API draws into. Used ONLY by the audited FFI module in crates/player.
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_Graphics_OpenGL",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_LibraryLoader",
+] }
 ffmpeg-next = "7"        # ffmpeg / libav* bindings (coverage + convert/clip/record)
 symphonia = { version = "0.5", features = ["all"] }  # pure-Rust audio decode where useful
 
@@ -49,6 +62,16 @@ symphonia = { version = "0.5", features = ["all"] }  # pure-Rust audio decode wh
 rupnp = "2"              # UPnP/DLNA control (cast to / discover renderers)
 mdns-sd = "0.11"         # mDNS service discovery (Chromecast/DLNA on the LAN)
 souvlaki = "0.7"         # OS media-key + now-playing integration (SMTC/MPRIS/MediaRemote)
+
+# --- Crash reporting (opt-in, anonymous — see HAVOC-STANDARD-bug-report-and-updater.md) ---
+chrono = "0.4"           # crash timestamps in local time (with offset) + UTC
+# Process-table lookup: the crash-notice helper waits for the crashed pid to be reaped.
+sysinfo = { version = "0.33", default-features = false, features = ["system"] }
+# Native "stopped unexpectedly" message box (MessageBoxW / NSAlert / GTK3). Pinned to
+# `gtk3` with NO default features: cargo unions features across the graph and rfd's build
+# script aborts if both `gtk3` and `xdg-portal` end up enabled; rfd's defaults also pull an
+# ashpd/wayland stack whose `quick-xml 0.39` carries an unpatched advisory.
+rfd = { version = "0.16", default-features = false, features = ["gtk3"] }
 
 # --- Storage / serde / paths / crypto ---
 rusqlite = { version = "0.32", features = ["bundled"] }   # local library / watch-state / cache

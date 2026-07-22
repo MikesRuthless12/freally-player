@@ -14,6 +14,18 @@ src-tauri/target/
 src-tauri/gen/
 *.tsbuildinfo
 
+# --- Vendored non-owned media engine (libmpv/ffmpeg dev libraries) ---
+# Fetched by scripts/vendor-libmpv.mjs, never committed: these are large third-party
+# binaries under their own (LGPL) terms. THIRD-PARTY-NOTICES.md records what they are and
+# the release bundle ships them alongside the app with a source offer.
+/third_party
+
+# --- Test outputs (regenerated; CI uploads them as artifacts) ---
+ui/e2e/screenshots/
+ui/e2e/.output/
+ui/test-results/
+ui/playwright-report/
+
 # --- Packaging / release artifacts ---
 *.msi
 *.exe

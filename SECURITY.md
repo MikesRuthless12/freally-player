@@ -70,10 +70,10 @@ remediate before any public disclosure.
   keys are NOT bundled**; encrypted discs require keys/configuration you provide, and you are
   responsible for compliance with your jurisdiction's laws. See [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md)
   and [`EULA.md`](EULA.md).
-- **Optional speech-to-text (auto-subtitles).** On-device STT is **opt-in**; its model is **not
-  bundled** and is downloaded on demand to a per-user cache (shown before fetch), then run locally.
-  Audio is processed **on your machine** and never uploaded.
-- **Updates / downloads integrity.** All optional downloads (yt-dlp, STT model, artwork) are over
+- **No AI/ML components.** Freally Player ships **no models, bundled or downloaded**, and has no
+  speech-to-text or machine-translation features. Every feature is deterministic, classic
+  engineering. (An earlier plan for on-device auto-subtitles was cut before implementation.)
+- **Updates / downloads integrity.** All optional downloads (yt-dlp, artwork) are over
   **TLS** from fixed, hardcoded hosts; target filenames are hardcoded literals (no path-traversal
   input); each file is streamed to a temp path and atomically renamed. **Tracked hardening:** per-file
   SHA-256/signature pinning — TLS authenticates the host, not the bytes.

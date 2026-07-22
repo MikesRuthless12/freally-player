@@ -1,0 +1,360 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push to the same ref supersedes the old run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ui:
+    name: UI — lint · format · typecheck · test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm run test:ui
+
+  # Visual smoke: boots the REAL built UI against a mocked IPC and drives every feature this
+  # phase added, screenshotting each panel. Runs on one OS because the web UI does not vary
+  # by platform — the per-OS proof is `app-boot` below plus `cargo test` on the matrix.
+  visual-smoke:
+    name: Visual smoke — Playwright gallery
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+        working-directory: ui
+      - name: Build the UI
+        run: npm run build
+      - name: Run the gallery
+        run: npm run test:e2e
+      - name: Upload the screenshot gallery
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-smoke-gallery
+          path: ui/e2e/screenshots/
+          if-no-files-found: error
+
+  # Proof the real desktop app boots and renders on every OS — not the web UI in a browser,
+  # the actual binary with its native window. Screenshots are uploaded so a human can SEE
+  # all three running. A fresh runner has accepted no EULA, so what you see is the
+  # first-run gate: process alive, window created, webview loaded, theme applied.
+  app-boot:
+    name: App boots — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install system dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libmpv-dev \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            xvfb \
+            imagemagick \
+            x11-utils \
+            x11-apps \
+            openbox \
+            dbus-x11 \
+            libgl1-mesa-dri
+
+      - name: Install libmpv (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install mpv
+      - name: Point the build at Homebrew's libmpv (macOS)
+        if: matrix.os == 'macos-latest'
+        run: echo "MPV_LIB_DIR=$(brew --prefix mpv)/lib" >> "$GITHUB_ENV"
+
+      - name: Vendor libmpv (Windows)
+        if: matrix.os == 'windows-latest'
+        run: node scripts/vendor-libmpv.mjs
+
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build the frontend
+        run: npm run build
+      - name: Build the app
+        run: cargo build -p freally-player --features engine-libmpv
+
+      # Each OS needs its own capture tool. The gate is that the process is still ALIVE after
+      # settling — a crash on startup is the regression this job exists to catch.
+      # WebKitGTK needs both flags to render without a GPU: without them the window maps but
+      # paints nothing, and the capture comes back as a uniform (tiny) PNG.
+      - name: Boot and screenshot (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          set -euo pipefail
+          Xvfb :99 -screen 0 1440x900x24 &
+          sleep 3
+          export DISPLAY=:99
+          # A window manager is load-bearing here: with no WM, nothing maps/focuses the
+          # window, so WebKitGTK never gets the expose that triggers its first paint and the
+          # capture comes back uniform even though the window exists at the right size.
+          openbox &
+          sleep 2
+          export WEBKIT_DISABLE_COMPOSITING_MODE=1
+          export WEBKIT_DISABLE_DMABUF_RENDERER=1
+          export LIBGL_ALWAYS_SOFTWARE=1
+          # A D-Bus session bus is load-bearing: WebKitGTK spawns its WebProcess over D-Bus,
+          # and without a bus the window maps at the right size but never paints — exactly
+          # the "window exists, capture is one flat colour" symptom.
+          dbus-run-session -- ./target/debug/freally-player > app.log 2>&1 &
+          APP_PID=$!
+          sleep 30
+
+          if ! kill -0 "$APP_PID" 2>/dev/null; then
+            echo "::error::the app exited before it could be screenshotted"
+            echo "--- app output ---"; cat app.log || true
+            exit 1
+          fi
+
+          # Diagnostics: if the capture turns out blank, this says whether a window exists
+          # at all (app problem) or exists but painted nothing (renderer problem).
+          echo "--- X client windows ---"
+          xwininfo -root -children || true
+          echo "--- app output so far ---"
+          cat app.log || true
+
+          # `import -window <name>` cannot grab a WM-reparented window here ("Resource
+          # temporarily unavailable"). xwd reads the screen contents directly, which is what
+          # we actually want — the whole desktop with the app on it.
+          xwd -root -silent > root.xwd
+          convert root.xwd app-ubuntu-latest.png
+          kill "$APP_PID" || true
+
+          # A byte-size floor cannot tell "dark theme" from "painted nothing". Count distinct
+          # colours instead: a rendered UI has hundreds, a blank surface has one or two.
+          colours=$(identify -format %k app-ubuntu-latest.png)
+          echo "distinct colours in the capture: $colours"
+          if [ "$colours" -lt 16 ]; then
+            echo "::error::the capture has only $colours distinct colours — the window exists but painted nothing"
+            exit 1
+          fi
+
+      - name: Boot and screenshot (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          set -euo pipefail
+          ./target/debug/freally-player &
+          APP_PID=$!
+          sleep 25
+          if ! kill -0 "$APP_PID" 2>/dev/null; then
+            echo "::error::the app exited before it could be screenshotted"
+            exit 1
+          fi
+          screencapture -x app-macos-latest.png
+          kill "$APP_PID" || true
+
+      - name: Boot and screenshot (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $app = Start-Process ".\target\debug\freally-player.exe" -PassThru
+          Start-Sleep -Seconds 25
+          $app.Refresh()
+          if ($app.HasExited) {
+            Write-Host "::error::the app exited before it could be screenshotted (code $($app.ExitCode))"
+            exit 1
+          }
+          Add-Type -AssemblyName System.Drawing, System.Windows.Forms
+          $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
+          ([System.Drawing.Graphics]::FromImage($bmp)).CopyFromScreen(0, 0, 0, 0, $bmp.Size)
+          $bmp.Save("app-windows-latest.png", [System.Drawing.Imaging.ImageFormat]::Png)
+          $bmp.Dispose()
+          Stop-Process -Id $app.Id -Force
+
+      # `shot` arrives through `env:`, never interpolated into the script body — a `${{ }}`
+      # spliced into shell source is the injection vector the Havoc standard forbids.
+      - name: Check the screenshot is not empty
+        shell: bash
+        env:
+          SHOT: app-${{ matrix.os }}.png
+        run: |
+          set -euo pipefail
+          if [ ! -f "$SHOT" ]; then
+            echo "::error::$SHOT was never produced"
+            exit 1
+          fi
+          size=$(wc -c < "$SHOT")
+          echo "$SHOT is $size bytes"
+          if [ "$size" -lt 2000 ]; then
+            echo "::error::$SHOT is suspiciously small — the capture is probably blank"
+            exit 1
+          fi
+
+      - name: Upload the app screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-boot-${{ matrix.os }}
+          path: app-${{ matrix.os }}.png
+          if-no-files-found: error
+
+  rust:
+    name: Rust — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # WebKitGTK is the webview on Linux; Windows uses the preinstalled WebView2 runtime and
+      # macOS uses WKWebView, so neither needs anything here.
+      # NOTE: libmpv/ffmpeg dev packages are deliberately NOT installed yet — the
+      # `engine-libmpv` / `engine-ffmpeg` features are off by default and land in P0.3. They
+      # get added here together with the code that needs them.
+      - name: Install Linux system dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      # The toolchain (channel + rustfmt/clippy) comes from rust-toolchain.toml, so local
+      # and CI run the exact same compiler.
+      - name: Show toolchain
+        run: rustup show
+
+      - uses: Swatinem/rust-cache@v2
+
+      # `tauri::generate_context!` reads tauri.conf.json's frontendDist (../ui/dist), so the
+      # frontend must be built before anything Rust-side compiles.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build the frontend
+        run: npm run build
+
+      - name: Format
+        run: cargo fmt --all --check
+      # Not --all-features: the engine features link against system media libraries that this
+      # job deliberately does not install (see the note above).
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Test
+        run: cargo test --workspace
+      - name: Build
+        run: cargo build --workspace
+
+  # The non-owned media engine, exercised on every OS. This is the job that guards the
+  # architecture: it proves libmpv links and initialises, and that the native video surface
+  # boundary behaves correctly per platform (a real surface on Windows; an honest
+  # "not implemented" on macOS/Linux until those hosts land).
+  engine:
+    name: Engine — libmpv — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # libmpv itself, plus a GPU/display stack: the Windows surface creates a real window
+      # and an OpenGL context, so the tests need something to render against. Mesa's software
+      # rasteriser under Xvfb is enough on Linux.
+      - name: Install libmpv (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libmpv-dev \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            xvfb \
+            mesa-utils \
+            libgl1-mesa-dri
+
+      - name: Install libmpv (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install mpv
+
+      # Homebrew on Apple Silicon installs outside the default linker search path.
+      - name: Point the build at Homebrew's libmpv (macOS)
+        if: matrix.os == 'macos-latest'
+        run: echo "MPV_LIB_DIR=$(brew --prefix mpv)/lib" >> "$GITHUB_ENV"
+
+      # No system libmpv exists on Windows, and MSVC cannot read the MinGW import library the
+      # upstream package ships — the vendor script fetches a pinned build (hash-checked) and
+      # generates a real mpv.lib from the DLL's export table.
+      - name: Vendor libmpv (Windows)
+        if: matrix.os == 'windows-latest'
+        run: node scripts/vendor-libmpv.mjs
+
+      - name: Show toolchain
+        run: rustup show
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Engine tests
+        if: matrix.os != 'ubuntu-latest'
+        run: cargo test -p freally-player-core --features engine-libmpv
+
+      # Xvfb gives the surface a display to create its window and GL context against.
+      - name: Engine tests (headless X)
+        if: matrix.os == 'ubuntu-latest'
+        run: xvfb-run -a cargo test -p freally-player-core --features engine-libmpv
+
+      - name: Clippy (engine)
+        run: cargo clippy -p freally-player-core --all-targets --features engine-libmpv -- -D warnings

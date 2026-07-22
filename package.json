@@ -1,0 +1,28 @@
+{
+  "name": "freally-player-workspace",
+  "private": true,
+  "version": "0.10.0",
+  "description": "Freally Player \u2014 npm workspace root (React/Vite UI + Tauri CLI).",
+  "license": "SEE LICENSE IN LICENSE",
+  "workspaces": [
+    "ui"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace ui",
+    "build": "npm run build --workspace ui",
+    "tauri": "tauri",
+    "lint": "npm run lint --workspace ui",
+    "format": "npm run format --workspace ui",
+    "format:check": "npm run format:check --workspace ui",
+    "typecheck": "npm run typecheck --workspace ui",
+    "test:ui": "npm run test --workspace ui",
+    "ci:local": "node scripts/ci-local.mjs",
+    "test:e2e": "npm run test:e2e --workspace ui"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

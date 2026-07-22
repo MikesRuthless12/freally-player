@@ -1,0 +1,89 @@
+name: Release
+
+# Tag-triggered: pushing `vX.Y.Z` builds the per-OS installers and opens a DRAFT GitHub
+# Release with them attached. The draft is published separately (never automatically) —
+# see the Definition of Done in Build-Prompts-Guide.md.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  bundle:
+    name: Bundle — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    # Only this job writes; `actions/checkout` below keeps credentials out of the checkout so
+    # the token cannot leak into a git remote.
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            args: ""
+          - os: macos-latest
+            args: "--target universal-apple-darwin"
+          - os: ubuntu-latest
+            args: ""
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Linux system dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Show toolchain
+        run: rustup show
+
+      - name: Add macOS universal targets
+        if: matrix.os == 'macos-latest'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # tauri-action runs `beforeBuildCommand` (npm run build) itself, then bundles per OS and
+      # uploads the artifacts to a draft release.
+      #
+      # `tagName` is passed as an action INPUT, not interpolated into a `run:` block — a ref
+      # name spliced into shell source is a command-injection vector (ref names permit `"`,
+      # `;`, `$` and backticks).
+      #
+      # Code signing is deliberately not wired yet: no certificates exist, and an empty
+      # signing secret is worse than an absent one. Artifacts ship unsigned until the certs
+      # are bought, at which point the signing env is added here.
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Freally Player __VERSION__
+          releaseBody: |
+            Freally Player __VERSION__.
+
+            See CHANGELOG.md for what changed. Installers for Windows, macOS and Linux are
+            attached below.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}

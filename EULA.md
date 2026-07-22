@@ -24,8 +24,7 @@ The Software is **completely free — every feature, for everyone**. There is no
 Pro tier, no payment, no license key, and no account. All features — the complete
 core playback experience (playback of supported formats, subtitles, and basic
 playlists) as well as the media library and scraping, casting/DLNA serving,
-conversion presets, on-device auto-subtitles, and advanced filters — are included
-at no charge.
+conversion presets, and advanced filters — are included at no charge.
 
 ## 3. Your content and your responsibility
 The Software is a general-purpose media player and toolkit for playing, streaming,
@@ -59,7 +58,7 @@ your breach of this Agreement.
 ## 5. Optical media, codecs, and optional components
 The Software can use optional, separately-licensed components (listed in
 [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md)), some downloaded on demand
-(e.g. **yt-dlp** for URL playback; a speech-to-text model for auto-subtitles).
+(e.g. **yt-dlp** for URL playback).
 
 - **DVD / Blu-ray / ISO.** The Software can navigate disc **menus** via
   libdvdnav/libbluray, but **decryption keys (AACS / CSS / BD+) are NOT bundled.**
