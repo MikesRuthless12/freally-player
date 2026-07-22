@@ -92,12 +92,21 @@ export default function App() {
   useEffect(() => {
     if (!accepted) return;
     let cancelled = false;
+    // The initial read and the event stream race. If an event lands first, the in-flight
+    // `get_state` answer is already stale — applying it would rewind the transport to
+    // whatever was true when we asked.
+    let sawEvent = false;
 
     getState().then(
-      (state) => !cancelled && setPlayback(state),
+      (state) => {
+        if (!cancelled && !sawEvent) setPlayback(state);
+      },
       () => {},
     );
-    const unlisten = onPlayerState((state) => !cancelled && setPlayback(state));
+    const unlisten = onPlayerState((state) => {
+      sawEvent = true;
+      if (!cancelled) setPlayback(state);
+    });
 
     return () => {
       cancelled = true;

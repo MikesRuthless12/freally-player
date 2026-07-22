@@ -156,9 +156,11 @@ jobs:
           echo "--- app output so far ---"
           cat app.log || true
 
-          # Capture the app's own window, not the root: the root is mostly empty desktop, and
-          # a dark window on a black root compresses to a near-empty PNG either way.
-          import -window "Freally Player" app-ubuntu-latest.png || import -window root app-ubuntu-latest.png
+          # `import -window <name>` cannot grab a WM-reparented window here ("Resource
+          # temporarily unavailable"). xwd reads the screen contents directly, which is what
+          # we actually want — the whole desktop with the app on it.
+          xwd -root -silent > root.xwd
+          convert root.xwd app-ubuntu-latest.png
           kill "$APP_PID" || true
 
           # A byte-size floor cannot tell "dark theme" from "painted nothing". Count distinct

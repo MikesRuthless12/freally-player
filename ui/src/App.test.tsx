@@ -48,8 +48,16 @@ function backend(overrides: Record<string, unknown> = {}) {
   });
 }
 
-/** Push a `player://…` event exactly as the Rust side would emit it. */
-function emit(event: string, payload: unknown) {
+/**
+ * Push a `player://…` event exactly as the Rust side would emit it.
+ *
+ * Waits for the UI to have subscribed first. Without that, `emit` is a silent no-op whenever
+ * the subscription effect has not run yet, and the assertion that follows fails on timing
+ * rather than on behaviour. (In production the same ordering holds: Rust only emits once the
+ * app is up and listening.)
+ */
+async function emit(event: string, payload: unknown) {
+  await waitFor(() => expect(listeners.has(event)).toBe(true));
   listeners.get(event)?.({ payload });
 }
 
@@ -71,7 +79,11 @@ describe("App", () => {
     listen.mockReset();
     listen.mockImplementation((event: string, handler: (e: { payload: unknown }) => void) => {
       listeners.set(event, handler);
-      return Promise.resolve(() => listeners.delete(event));
+      // Remove only THIS handler, the way Tauri's per-listener id does. Deleting by event
+      // name lets a late async cleanup unregister a newer subscription.
+      return Promise.resolve(() => {
+        if (listeners.get(event) === handler) listeners.delete(event);
+      });
     });
     document.documentElement.removeAttribute("data-theme");
   });
@@ -159,7 +171,7 @@ describe("App", () => {
       render(<App />);
       await screen.findByText("No media loaded");
 
-      emit("player://state", {
+      await emit("player://state", {
         status: "playing",
         positionSecs: 75,
         media: { path: "C:/v/Arrival.mkv", title: "Arrival", durationSecs: 7200 },
@@ -211,7 +223,7 @@ describe("App", () => {
       render(<App />);
       await screen.findByText("No media loaded");
 
-      emit("player://state", {
+      await emit("player://state", {
         status: "playing",
         positionSecs: 40,
         media: { path: "C:/v/clip.mkv", title: "clip", durationSecs: null },
