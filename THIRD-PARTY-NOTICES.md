@@ -41,6 +41,31 @@ components.
 Transitive Rust dependencies are MIT / Apache-2.0 / BSD / Zlib / MPL. Verify the full set with
 `cargo about` / `cargo deny` before any release.
 
+## Fonts — bundled
+
+| Component | Role | License |
+|-----------|------|---------|
+| [Noto Sans](https://fonts.google.com/noto) (Latin / Greek / Cyrillic / Devanagari / Vietnamese) | the UI typeface | **OFL-1.1** |
+| Noto Sans Arabic · Noto Sans Devanagari | Arabic and Hindi UI text | **OFL-1.1** |
+| Noto Sans SC · TC · JP · KR | Simplified/Traditional Chinese, Japanese, Korean UI **and content** text | **OFL-1.1** |
+| [Fontsource](https://fontsource.org) (`@fontsource-variable/*`) | the packaging that delivers the above as self-hosted WOFF2 | MIT (packaging; the fonts stay OFL-1.1) |
+
+> **Noto is OFL-1.1, not Apache-2.0.** Early Noto releases were Apache-2.0 and the assumption
+> outlives them; Google relicensed the family to the SIL Open Font License years ago, and OFL is
+> what governs what we ship. OFL explicitly permits bundling inside a proprietary application:
+> the fonts may be redistributed with software, at no cost or sold as part of it, provided they
+> are not sold *on their own* and this notice travels with them.
+>
+> The one clause with teeth is the **Reserved Font Name**: a modified font may not keep the Noto
+> name. We therefore ship the published WOFF2 files **byte-for-byte unmodified** — no subsetting,
+> no re-hinting, no renaming — which keeps us clear of it entirely. If a future build ever
+> subsets these fonts to save space, it must be renamed, and this notice updated to match.
+>
+> Bundled rather than relied upon: Windows and macOS ship CJK system fonts, but many Linux
+> installs do not, so unbundled CJK renders as tofu there. The variable builds keep all four CJK
+> families to ~19 MB in total. `ui/e2e/fonts.spec.ts` asserts every shipped language actually
+> rasterises in a bundled face.
+
 ## Media engine — decode / render / hardware decode (the core dependency)
 
 **Linked / bundled (the playback engine):**

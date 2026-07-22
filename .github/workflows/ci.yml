@@ -36,11 +36,19 @@ jobs:
       - run: npm run test:ui
 
   # Visual smoke: boots the REAL built UI against a mocked IPC and drives every feature this
-  # phase added, screenshotting each panel. Runs on one OS because the web UI does not vary
-  # by platform — the per-OS proof is `app-boot` below plus `cargo test` on the matrix.
+  # phase added, screenshotting each panel.
+  #
+  # Runs on ALL THREE OSes, not one. The chrome itself does not vary by platform, but font
+  # resolution does: which face a script actually falls back to is a property of the machine,
+  # so `fonts.spec.ts` is only meaningful when it runs on each of them. Screenshots are tagged
+  # per OS and uploaded per OS, giving one image per language per platform to eyeball.
   visual-smoke:
-    name: Visual smoke — Playwright gallery
-    runs-on: ubuntu-latest
+    name: Visual smoke — Playwright gallery — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,8 +58,15 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Install Playwright browser
+      # `--with-deps` installs OS packages and is Linux-only; elsewhere it is an error, not a
+      # no-op.
+      - name: Install Playwright browser (Linux)
+        if: matrix.os == 'ubuntu-latest'
         run: npx playwright install --with-deps chromium
+        working-directory: ui
+      - name: Install Playwright browser
+        if: matrix.os != 'ubuntu-latest'
+        run: npx playwright install chromium
         working-directory: ui
       - name: Build the UI
         run: npm run build
@@ -61,7 +76,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-smoke-gallery
+          name: visual-smoke-gallery-${{ matrix.os }}
           path: ui/e2e/screenshots/
           if-no-files-found: error
 

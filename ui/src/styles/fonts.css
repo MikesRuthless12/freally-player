@@ -1,0 +1,89 @@
+/*
+ * Bundled Noto — so the UI renders in every shipped language, offline, on every OS.
+ *
+ * Why bundle at all: Windows and macOS carry CJK system fonts, but many Linux installs do
+ * not, so Korean or Chinese text there renders as tofu boxes. A media player also shows
+ * *content* text — filenames, subtitle tracks, media titles — in whatever script the file
+ * uses, regardless of the UI language, so the coverage has to be there whichever locale is
+ * selected.
+ *
+ * These are the VARIABLE builds: one file per script covers weights 100-900, which is what
+ * lets all four CJK families ship for ~25 MB instead of ~285 MB of static weights. Fontsource
+ * slices each family by `unicode-range`, so the webview downloads only the slices whose
+ * codepoints are actually on screen — Latin-only UI never touches the CJK files.
+ *
+ * Licensing: Noto is OFL-1.1 (NOT Apache-2.0 — Google relicensed it years ago). Bundling in a
+ * proprietary app is permitted; the Reserved Font Name clause only binds if the fonts are
+ * MODIFIED, which is why we ship them byte-for-byte as published. See THIRD-PARTY-NOTICES.md.
+ */
+@import "@fontsource-variable/noto-sans";
+@import "@fontsource-variable/noto-sans-arabic";
+@import "@fontsource-variable/noto-sans-devanagari";
+@import "@fontsource-variable/noto-sans-sc";
+@import "@fontsource-variable/noto-sans-tc";
+@import "@fontsource-variable/noto-sans-jp";
+@import "@fontsource-variable/noto-sans-kr";
+
+/*
+ * The default stack. Latin/Greek/Cyrillic/Vietnamese come from Noto Sans; anything it does not
+ * cover falls through to the script-specific families, then to the OS.
+ *
+ * The system fonts at the end are load-bearing, not politeness: the bundled set deliberately
+ * stops short of every script Noto publishes (~1 GB), and Korean NFD text — which is how macOS
+ * stores Hangul filenames — uses conjoining Jamo that Noto Sans KR's web build omits. Those
+ * codepoints must land on a system font rather than a tofu box.
+ */
+:root {
+  --font-freally:
+    "Noto Sans Variable", "Noto Sans Arabic Variable", "Noto Sans Devanagari Variable",
+    "Noto Sans SC Variable", "Noto Sans TC Variable", "Noto Sans JP Variable",
+    "Noto Sans KR Variable", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+}
+
+/*
+ * Han unification means SC, TC, JP and KR share codepoints but draw them differently — the
+ * same character is a different shape depending on the language. Whichever family sits first
+ * in the stack wins, so without these rules Japanese text would silently render in Simplified
+ * Chinese letterforms: legible, and wrong.
+ *
+ * These key off the document language, so the language switcher only has to set `<html lang>`
+ * and the correct family leads automatically.
+ */
+:root:lang(ja) {
+  --font-freally:
+    "Noto Sans Variable", "Noto Sans JP Variable", "Noto Sans SC Variable", "Noto Sans TC Variable",
+    "Noto Sans KR Variable", system-ui, sans-serif;
+}
+
+:root:lang(ko) {
+  --font-freally:
+    "Noto Sans Variable", "Noto Sans KR Variable", "Noto Sans JP Variable", "Noto Sans SC Variable",
+    "Noto Sans TC Variable", system-ui, sans-serif;
+}
+
+/*
+ * Simplified Chinese is the `zh` default and MUST come first, because `:lang(zh)` also matches
+ * `zh-TW` and `zh-HK` — CSS `:lang()` matches on BCP-47 prefix, so every Traditional tag
+ * matches this rule too. These selectors have equal specificity, so the later rule wins; the
+ * Traditional block below therefore has to be second to override it. Ordering these the
+ * intuitive way round (specific-looking first) silently renders Traditional Chinese in
+ * Simplified letterforms — caught by e2e/fonts.spec.ts, which is why that test exists.
+ */
+:root:lang(zh),
+:root:lang(zh-Hans),
+:root:lang(zh-CN) {
+  --font-freally:
+    "Noto Sans Variable", "Noto Sans SC Variable", "Noto Sans TC Variable", "Noto Sans JP Variable",
+    "Noto Sans KR Variable", system-ui, sans-serif;
+}
+
+/* Traditional Chinese: zh-TW / zh-HK / zh-Hant all want TC letterforms. Must follow the `zh`
+   rule above to win the cascade. */
+:root:lang(zh-Hant),
+:root:lang(zh-TW),
+:root:lang(zh-HK) {
+  --font-freally:
+    "Noto Sans Variable", "Noto Sans TC Variable", "Noto Sans SC Variable", "Noto Sans JP Variable",
+    "Noto Sans KR Variable", system-ui, sans-serif;
+}
