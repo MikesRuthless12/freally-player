@@ -95,6 +95,7 @@ jobs:
             xvfb \
             imagemagick \
             x11-utils \
+            x11-apps \
             openbox \
             libgl1-mesa-dri
 
