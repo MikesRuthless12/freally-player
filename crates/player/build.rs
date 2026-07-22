@@ -67,8 +67,17 @@ fn mpv_dir() -> PathBuf {
 /// Put the runtime shared library beside the built artifacts.
 ///
 /// On Windows the loader only searches the executable's directory (and PATH), so without this
-/// every `cargo run` would fail at startup with a missing-DLL box. The bundler ships the same
-/// file as a resource for installed builds.
+/// every `cargo run` would fail at startup with a missing-DLL box.
+///
+/// **Installed builds are handled separately, and cannot be handled at runtime.** `libmpv-2.dll`
+/// is a *load-time* import of the executable (`dumpbin /dependents` lists it), so the loader
+/// resolves it before `main` runs — `SetDllDirectory`, `LoadLibrary` from a resource path, or
+/// any other runtime fixup happens too late to matter. The file simply has to be sitting next
+/// to the exe. `src-tauri/tauri.windows.conf.json` maps it into `bundle.resources` with a bare
+/// filename target, because on Windows Tauri's resource directory *is* the executable's
+/// directory (`tauri_utils::platform::resource_dir`). The map form is required: the list form
+/// would rewrite `../third_party/...` to a `_up_/third_party/...` subdirectory, where the
+/// loader would never look.
 fn copy_runtime_library(dir: &Path) {
     let name = if cfg!(target_os = "windows") {
         "libmpv-2.dll"

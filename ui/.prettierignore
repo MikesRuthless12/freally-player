@@ -1,2 +1,11 @@
 dist
 node_modules
+
+# Playwright's own generated output. These are gitignored build artifacts, never hand-edited,
+# and Prettier does not read .gitignore — so without this a local `ci-local.mjs` run fails
+# format:check on leftovers from the e2e step, while CI passes because its format job runs on a
+# fresh checkout that never produced them.
+e2e/.output
+e2e/screenshots
+test-results
+playwright-report

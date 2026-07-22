@@ -64,9 +64,33 @@ Transitive Rust dependencies are MIT / Apache-2.0 / BSD / Zlib / MPL. Verify the
 > (no GPL-only or nonfree components enabled). LGPL permits use in a proprietary application provided
 > the LGPL components remain replaceable/relinkable and their licenses + source offers are honored —
 > which is why the engine sits **behind the player-core `Engine` interface** and is shipped as a
-> separate shared library, with this notice and a written offer for the corresponding LGPL source.
+> separate shared library, with this notice and the written offer below.
 > We do **not** enable ffmpeg's GPL or nonfree paths. This is the same posture VLC and other
 > LGPL-based players ship under; it is reviewed before each release.
+
+### Written offer for the LGPL source — exactly what we ship
+
+The installers **bundle** the LGPL engine as a shared library, so this offer is a live obligation,
+not a formality. What ships, per platform:
+
+| Platform | Bundled file | Upstream build |
+|----------|--------------|----------------|
+| Windows | `libmpv-2.dll`, installed **next to `freally-player.exe`** | [`shinchiro/mpv-winbuild-cmake`](https://github.com/shinchiro/mpv-winbuild-cmake) release **`20260610`**, asset `mpv-dev-x86_64-20260610-git-304426c.7z` (mpv `git-304426c`) — SHA-256 pinned and verified by `scripts/vendor-libmpv.mjs` |
+
+This Windows build links ffmpeg and libass **statically into `libmpv-2.dll`**; that whole library is
+LGPL and is shipped as a replaceable file, which is what LGPL §4 requires. **You may replace it:**
+drop your own build of `libmpv-2.dll` (same filename, compatible ABI) into the install directory and
+the app will load yours instead — the executable imports it by name at load time.
+
+**The offer.** For **three years** from the date you received this software, we will provide the
+complete corresponding source for the LGPL components in the build you received, plus the scripts
+used to configure and build them, for no more than the cost of distribution. Request it from
+**mythodikalone@gmail.com** (subject: *"LGPL source request — Freally Player"*), stating the version
+and platform shown in the app's **About** pane (the ⓘ icon in the title bar). The upstream sources
+are also public at the URLs above; the pinned tag and commit identify the exact revision.
+
+> **Maintenance note:** when `scripts/vendor-libmpv.mjs` bumps its pinned `RELEASE`, update this
+> table in the same commit. An offer that names a build we no longer ship is not a valid offer.
 
 ## Subtitles, streaming, casting & media keys
 
