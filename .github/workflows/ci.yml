@@ -94,6 +94,7 @@ jobs:
             patchelf \
             xvfb \
             imagemagick \
+            x11-utils \
             libgl1-mesa-dri
 
       - name: Install libmpv (macOS)
@@ -120,6 +121,8 @@ jobs:
 
       # Each OS needs its own capture tool. The gate is that the process is still ALIVE after
       # settling — a crash on startup is the regression this job exists to catch.
+      # WebKitGTK needs both flags to render without a GPU: without them the window maps but
+      # paints nothing, and the capture comes back as a uniform (tiny) PNG.
       - name: Boot and screenshot (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -128,13 +131,25 @@ jobs:
           sleep 3
           export DISPLAY=:99
           export WEBKIT_DISABLE_COMPOSITING_MODE=1
-          ./target/debug/freally-player &
+          export WEBKIT_DISABLE_DMABUF_RENDERER=1
+          export LIBGL_ALWAYS_SOFTWARE=1
+          ./target/debug/freally-player > app.log 2>&1 &
           APP_PID=$!
-          sleep 25
+          sleep 30
+
           if ! kill -0 "$APP_PID" 2>/dev/null; then
             echo "::error::the app exited before it could be screenshotted"
+            echo "--- app output ---"; cat app.log || true
             exit 1
           fi
+
+          # Diagnostics: if the capture turns out blank, this says whether a window exists
+          # at all (app problem) or exists but painted nothing (renderer problem).
+          echo "--- X client windows ---"
+          xwininfo -root -children || true
+          echo "--- app output so far ---"
+          cat app.log || true
+
           import -window root app-ubuntu-latest.png
           kill "$APP_PID" || true
 
