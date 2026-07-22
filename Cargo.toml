@@ -16,7 +16,7 @@ members = [
     "src-tauri",
     "crates/player",      # freally-player-core — playback orchestration over libmpv/ffmpeg
     "crates/library",     # freally-library     — media library, scraping, watch-state (SQLite)
-    "crates/subtitles",   # freally-subtitles   — SRT/ASS/SSA/PGS/VobSub/WebVTT + fetch + STT
+    "crates/subtitles",   # freally-subtitles   — SRT/ASS/SSA/PGS/VobSub/WebVTT + online fetch
     "crates/streaming",   # freally-streaming   — network streams, casting/DLNA, yt-dlp sidecar
     "crates/convert",     # freally-convert     — transcode presets, clip/record, GIF export
 ]

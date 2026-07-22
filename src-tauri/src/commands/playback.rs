@@ -52,6 +52,11 @@ impl PlayerState {
         Box::new(NullEngine::default())
     }
 
+    /// The current transport snapshot.
+    pub fn snapshot(&self) -> PlaybackState {
+        self.with(|engine| engine.state())
+    }
+
     fn with<R>(&self, f: impl FnOnce(&mut dyn Engine) -> R) -> R {
         let mut guard = self
             .engine

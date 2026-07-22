@@ -36,8 +36,8 @@ take an action that needs it — specifically:
   or paste a YouTube/site URL (played via the **yt-dlp** sidecar);
 - **Casting / DLNA on your local network** — when you cast to, or share with, a
   device on your LAN;
-- **Optional component downloads** — the **yt-dlp** tool and the optional
-  **speech-to-text** model, fetched on demand from their third-party distributors;
+- **Optional component downloads** — the **yt-dlp** tool, fetched on demand from
+  its third-party distributor;
 - **Update checks** — the only contact with a Havoc Software endpoint, and it is
   minimal.
 

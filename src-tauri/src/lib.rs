@@ -96,6 +96,7 @@ pub fn run() {
         .setup(move |app| {
             restore_window(app.handle());
             attach_video_surface(app.handle());
+            spawn_transport_ticker(app.handle());
             open_media_from_args(app.handle(), &startup_args);
             Ok(())
         })
@@ -129,6 +130,36 @@ fn restore_window(app: &tauri::AppHandle) {
             log::warn!("could not restore maximized window: {e}");
         }
     }
+}
+
+/// Mirror the transport to the UI while it moves.
+///
+/// Commands emit `player://state` when the *user* does something, but nothing emits while a
+/// file simply plays — so the position sat at 0:00 for the whole film. This samples a few
+/// times a second and emits only when the snapshot actually changed, which also catches the
+/// transitions no command covers: mpv pausing itself to buffer, or reaching end of file.
+///
+/// Emitting on change rather than on every tick keeps an idle or paused player silent.
+fn spawn_transport_ticker(app: &tauri::AppHandle) {
+    /// Four times a second: fine enough that a seconds display never looks stuck, coarse
+    /// enough to stay invisible in CPU terms. Phase 1's scrubber can raise it if needed.
+    const TICK: std::time::Duration = std::time::Duration::from_millis(250);
+
+    let app = app.clone();
+    std::thread::Builder::new()
+        .name("freally-transport-ticker".to_owned())
+        .spawn(move || {
+            let mut last: Option<freally_player_core::PlaybackState> = None;
+            loop {
+                std::thread::sleep(TICK);
+                let state = app.state::<PlayerState>().snapshot();
+                if last.as_ref() != Some(&state) {
+                    events::emit_state(&app, &state);
+                    last = Some(state);
+                }
+            }
+        })
+        .expect("the transport ticker thread should start");
 }
 
 /// The media target the app was launched with, if any — an OS "Open with", a shell

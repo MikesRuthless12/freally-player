@@ -104,15 +104,12 @@ separate binary. The app passes only the URL you entered, via an argv vector (no
 > responsibility** — see [`EULA.md`](EULA.md). Where libdvdnav (GPL) is involved, that path is driven
 > via the separate engine library, not statically linked into the proprietary app.
 
-## Optional models (on-demand; not bundled)
+## Models
 
-| Component | Role | License | Notes |
-|-----------|------|---------|-------|
-| On-device speech-to-text model (e.g. a Whisper-class GGML model) | optional **auto-subtitles** (STT) + translate, fully local | model's own permissive terms (audited before shipping) | downloaded on demand to a per-user cache; audio never leaves the machine |
-
-Only **permissive, audited** models are ever auto-downloaded; the app shows the size and source
-before fetching, and the feature degrades gracefully (manual subtitles still work) if no model is
-present.
+**None.** Freally Player ships no AI/ML models, bundled or downloaded on demand. An earlier plan
+for an on-device speech-to-text model (auto-subtitles) was cut before implementation, so there is
+no model component to license, audit, or fetch. Subtitles come from the file, from a sidecar file,
+or from an opt-in online lookup.
 
 ## Codec / patent note
 

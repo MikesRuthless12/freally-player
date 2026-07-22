@@ -29,26 +29,28 @@
       <article class="release latest">
         <div class="release-head">
           <div class="meta">
-            <span class="badge">v0.1.0 · Planning</span>
-            <span class="date">Pre-development · Project started Jun 30, 2026</span>
+            <span class="badge">v0.1.0 · In development</span>
+            <span class="date">Building toward 0.10.0 · Project started Jun 30, 2026</span>
           </div>
           <span class="dl-placeholder">Downloads available in future releases</span>
         </div>
 
         <h2>No releases yet — building toward 0.10.0</h2>
         <p class="summary">
-          Freally Player is in the planning stage; the application itself is not built yet.
-          When the first release ships, signed installers for Windows, macOS,
+          Freally Player now builds and plays video, but nothing has been released yet.
+          When the first release ships, installers for Windows, macOS,
           and Linux will appear here, and this page will list each version's changes. Freally Player is
           completely free — every feature included: the full player, the media library, casting, and conversion.
           <strong>No ads, no telemetry, no account — ever.</strong>
         </p>
 
-        <h3>What's coming first (0.10.0 — Foundation)</h3>
+        <h3>Built so far (0.10.0 — Foundation)</h3>
         <ul class="features">
-          <li>The Tauri v2 shell (Rust core + a modern React/TypeScript UI in the Havoc dark theme), with the Windows build as a GUI app that opens no console window.</li>
-          <li>The key architecture: decoded video rendered into a <strong>native, hardware-accelerated surface composited under the web UI</strong> (via the libmpv render API) — proven on Windows, macOS, and Linux before any features are built.</li>
-          <li>The cross-platform CI matrix and a tag-triggered release workflow that produces draft installers per OS.</li>
+          <li>The Tauri v2 shell (Rust core + a modern React/TypeScript UI in the Havoc dark theme, with a light theme too), and the Windows build as a GUI app that opens no console window.</li>
+          <li><strong>The key architecture, working:</strong> decoded video is rendered into a native, hardware-accelerated GPU surface driven through the libmpv render API and composited with the web UI, so video never travels through the interface layer. Video output runs on <strong>Windows</strong> today; the macOS and Linux surfaces are still being built, and the app says so plainly rather than showing a blank screen.</li>
+          <li>Playback controls wired end to end — open, play, pause, and seek — with the interface following the player's real state.</li>
+          <li>A first-run licence agreement, and opt-in anonymous bug reporting that never sends anything without an explicit click.</li>
+          <li>The cross-platform CI matrix — including a job that verifies the media engine on Windows, macOS and Linux — and a tag-triggered release workflow that produces draft installers per OS.</li>
           <li>This Havoc-branded site, with the roadmap to 1.0.0.</li>
         </ul>
       </article>

@@ -16,7 +16,10 @@ pub const EULA_TEXT: &str = include_str!("../../EULA.md");
 
 /// The current EULA version. Bump on any material `EULA.md` change so users are asked to
 /// accept the new terms. (Date-stamped for a human-readable audit.)
-pub const EULA_VERSION: &str = "2026-07-01";
+///
+/// 2026-07-21 — dropped the speech-to-text / auto-subtitle references, which described a
+/// feature the No-AI charter had already cut.
+pub const EULA_VERSION: &str = "2026-07-21";
 
 /// What the UI needs to render + gate on the EULA.
 #[derive(Debug, Clone, Serialize)]
@@ -61,5 +64,19 @@ mod tests {
         assert!(EULA_TEXT.contains("indemnify"));
         assert!(EULA_TEXT.contains("AS IS"));
         assert_eq!(EULA_VERSION.split('-').count(), 3, "date-stamped version");
+    }
+
+    /// The agreement is binding once accepted, so it must not promise capabilities the
+    /// product does not ship. The No-AI charter cut speech-to-text auto-subtitles; the EULA
+    /// listed them among the included features until 2026-07-21.
+    #[test]
+    fn the_agreement_promises_no_features_the_charter_cut() {
+        let text = EULA_TEXT.to_lowercase();
+        for cut in ["speech-to-text", "auto-subtitle"] {
+            assert!(
+                !text.contains(cut),
+                "EULA.md still mentions {cut:?}, which this product does not ship"
+            );
+        }
     }
 }
