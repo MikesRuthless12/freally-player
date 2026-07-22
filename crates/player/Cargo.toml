@@ -13,7 +13,19 @@ license.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 log.workspace = true
-# Non-owned decode/render engines (behind the Engine trait; LGPL builds, no GPL/nonfree):
-libmpv2.workspace = true       # primary decode + render (render API)
-ffmpeg-next.workspace = true   # coverage + conversion engine
-symphonia.workspace = true     # pure-Rust audio decode where useful
+# Non-owned decode/render engines (behind the Engine trait; LGPL builds, no GPL/nonfree).
+# libmpv2/ffmpeg-next link against SYSTEM libraries, so they are optional and OFF by default:
+# the workspace must build on a machine with no media libs installed. P0.3 vendors libmpv into
+# third_party/ and turns `engine-libmpv` on.
+libmpv2 = { workspace = true, optional = true }      # primary decode + render (render API)
+ffmpeg-next = { workspace = true, optional = true }  # coverage + conversion engine
+symphonia = { workspace = true, optional = true }    # pure-Rust audio decode where useful
+
+[target.'cfg(windows)'.dependencies]
+# Only pulled in with the libmpv engine — see the surface module.
+windows-sys = { workspace = true, optional = true }
+
+[features]
+default = []
+engine-libmpv = ["dep:libmpv2", "dep:windows-sys"]
+engine-ffmpeg = ["dep:ffmpeg-next", "dep:symphonia"]

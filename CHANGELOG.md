@@ -23,6 +23,15 @@ release).
   stub.
 - Cargo workspace (`src-tauri` app crate + `crates/` player, library, subtitles, streaming, convert),
   proprietary `LICENSE` + governance docs, `.gitignore` / `.gitattributes`, `rust-toolchain.toml`.
+- **Havoc dark *and* light themes** — one set of CSS custom properties, switched at runtime and
+  persisted in settings; dark stays the default.
+- **First-run EULA acceptance gate** — `EULA.md` embedded at build time, scroll-to-read modal with
+  **I Agree** / **Decline & Quit**, acceptance persisted and re-prompted only when `EULA_VERSION`
+  changes.
+- **Opt-in anonymous bug reporting** (per `HAVOC-STANDARD-bug-report-and-updater.md`) — a panic hook
+  writes a scrubbed local crash report, a native error window offers a restart, and the relaunched
+  app auto-surfaces the report with GitHub / Gmail / mail-client submission. Nothing auto-sends; no
+  server, no shipped credentials.
 - CI matrix on `windows-latest` / `macos-latest` / `ubuntu-latest`; tag-triggered release workflow →
   draft GitHub Release.
 - `docs/` GitHub Pages site seed (Havoc-branded landing + changelog + "Roadmap to 1.0.0"); download

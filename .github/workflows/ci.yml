@@ -1,0 +1,158 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push to the same ref supersedes the old run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ui:
+    name: UI — lint · format · typecheck · test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm run test:ui
+
+  rust:
+    name: Rust — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # WebKitGTK is the webview on Linux; Windows uses the preinstalled WebView2 runtime and
+      # macOS uses WKWebView, so neither needs anything here.
+      # NOTE: libmpv/ffmpeg dev packages are deliberately NOT installed yet — the
+      # `engine-libmpv` / `engine-ffmpeg` features are off by default and land in P0.3. They
+      # get added here together with the code that needs them.
+      - name: Install Linux system dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      # The toolchain (channel + rustfmt/clippy) comes from rust-toolchain.toml, so local
+      # and CI run the exact same compiler.
+      - name: Show toolchain
+        run: rustup show
+
+      - uses: Swatinem/rust-cache@v2
+
+      # `tauri::generate_context!` reads tauri.conf.json's frontendDist (../ui/dist), so the
+      # frontend must be built before anything Rust-side compiles.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build the frontend
+        run: npm run build
+
+      - name: Format
+        run: cargo fmt --all --check
+      # Not --all-features: the engine features link against system media libraries that this
+      # job deliberately does not install (see the note above).
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Test
+        run: cargo test --workspace
+      - name: Build
+        run: cargo build --workspace
+
+  # The non-owned media engine, exercised on every OS. This is the job that guards the
+  # architecture: it proves libmpv links and initialises, and that the native video surface
+  # boundary behaves correctly per platform (a real surface on Windows; an honest
+  # "not implemented" on macOS/Linux until those hosts land).
+  engine:
+    name: Engine — libmpv — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # libmpv itself, plus a GPU/display stack: the Windows surface creates a real window
+      # and an OpenGL context, so the tests need something to render against. Mesa's software
+      # rasteriser under Xvfb is enough on Linux.
+      - name: Install libmpv (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libmpv-dev \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            xvfb \
+            mesa-utils \
+            libgl1-mesa-dri
+
+      - name: Install libmpv (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install mpv
+
+      # Homebrew on Apple Silicon installs outside the default linker search path.
+      - name: Point the build at Homebrew's libmpv (macOS)
+        if: matrix.os == 'macos-latest'
+        run: echo "MPV_LIB_DIR=$(brew --prefix mpv)/lib" >> "$GITHUB_ENV"
+
+      # No system libmpv exists on Windows, and MSVC cannot read the MinGW import library the
+      # upstream package ships — the vendor script fetches a pinned build (hash-checked) and
+      # generates a real mpv.lib from the DLL's export table.
+      - name: Vendor libmpv (Windows)
+        if: matrix.os == 'windows-latest'
+        run: node scripts/vendor-libmpv.mjs
+
+      - name: Show toolchain
+        run: rustup show
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Engine tests
+        if: matrix.os != 'ubuntu-latest'
+        run: cargo test -p freally-player-core --features engine-libmpv
+
+      # Xvfb gives the surface a display to create its window and GL context against.
+      - name: Engine tests (headless X)
+        if: matrix.os == 'ubuntu-latest'
+        run: xvfb-run -a cargo test -p freally-player-core --features engine-libmpv
+
+      - name: Clippy (engine)
+        run: cargo clippy -p freally-player-core --all-targets --features engine-libmpv -- -D warnings

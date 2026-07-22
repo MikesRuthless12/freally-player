@@ -1,0 +1,328 @@
+//! The JSON settings store — `settings.json` in the OS config dir.
+//!
+//! User configuration lives as plain JSON in the per-user config directory (via
+//! `directories`), e.g. `%APPDATA%\Freally\Freally Player\config\` on Windows,
+//! `~/Library/Application Support/` on macOS, `~/.config/` on Linux. Writes are atomic
+//! (temp file + rename) so a crash never truncates the file.
+//!
+//! Phase 0 stores window geometry only — the shell's own state. Feature settings arrive
+//! with their phases (see `product-roadmap.md`); a malformed or future-schema file always
+//! degrades to defaults rather than failing the launch.
+
+use std::fs;
+use std::io::{self, Write};
+use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+
+use serde::{Deserialize, Serialize};
+
+use crate::paths;
+
+/// Bumped whenever the on-disk shape changes in a way that needs migration.
+const SCHEMA_VERSION: u32 = 1;
+
+/// Window geometry bounds. The lower bounds mirror `tauri.conf.json`'s `minWidth`/
+/// `minHeight`; the upper bound is a sanity ceiling so a corrupt file can never ask for a
+/// window the user cannot reach.
+const MIN_WIDTH: u32 = 900;
+const MIN_HEIGHT: u32 = 560;
+const MAX_DIMENSION: u32 = 16_384;
+
+/// The UI colour scheme. Dark is the Havoc default; light is a full token override.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Theme {
+    #[default]
+    Dark,
+    Light,
+}
+
+/// The main window's restored geometry.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct WindowSettings {
+    pub width: u32,
+    pub height: u32,
+    pub maximized: bool,
+}
+
+impl Default for WindowSettings {
+    fn default() -> Self {
+        Self {
+            width: 1200,
+            height: 800,
+            maximized: false,
+        }
+    }
+}
+
+impl WindowSettings {
+    /// Clamp geometry into the reachable range, falling back to the default on nonsense.
+    fn clamp(&mut self) {
+        let default = Self::default();
+        if self.width < MIN_WIDTH || self.width > MAX_DIMENSION {
+            self.width = default.width;
+        }
+        if self.height < MIN_HEIGHT || self.height > MAX_DIMENSION {
+            self.height = default.height;
+        }
+    }
+}
+
+/// Everything persisted between runs.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct Settings {
+    pub schema_version: u32,
+    pub window: WindowSettings,
+    /// The UI colour scheme.
+    pub theme: Theme,
+    /// The EULA version the user accepted, if any. `None` until first acceptance — the app
+    /// does not render its main UI until this matches the shipped `EULA_VERSION`.
+    pub accepted_eula_version: Option<String>,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            schema_version: SCHEMA_VERSION,
+            window: WindowSettings::default(),
+            theme: Theme::default(),
+            accepted_eula_version: None,
+        }
+    }
+}
+
+/// The live settings, backed by a JSON file that is rewritten atomically on every change.
+#[derive(Debug)]
+pub struct SettingsStore {
+    path: PathBuf,
+    current: Mutex<Settings>,
+}
+
+impl SettingsStore {
+    /// Load from the OS config dir, or fall back to an in-memory default when the platform
+    /// gives us no config directory (a headless/sandboxed environment).
+    pub fn load_default() -> Self {
+        match settings_path() {
+            Some(path) => Self::load_from(path),
+            None => {
+                log::warn!("no OS config directory available — settings will not persist");
+                Self {
+                    path: PathBuf::from("settings.json"),
+                    current: Mutex::new(Settings::default()),
+                }
+            }
+        }
+    }
+
+    /// Load from an explicit path (used by tests).
+    pub fn load_from(path: PathBuf) -> Self {
+        let current = read_settings(&path);
+        Self {
+            path,
+            current: Mutex::new(current),
+        }
+    }
+
+    /// A snapshot of the current settings.
+    pub fn get(&self) -> Settings {
+        self.current
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .clone()
+    }
+
+    /// Replace the settings and persist them atomically.
+    pub fn set(&self, mut next: Settings) -> io::Result<()> {
+        next.schema_version = SCHEMA_VERSION;
+        next.window.clamp();
+
+        let json = serde_json::to_string_pretty(&next)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        if let Some(parent) = self.path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        write_atomic(&self.path, &json)?;
+
+        *self
+            .current
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner()) = next;
+        Ok(())
+    }
+
+    /// Persist the main window's geometry.
+    pub fn set_window(&self, window: WindowSettings) -> io::Result<()> {
+        let mut next = self.get();
+        next.window = window;
+        self.set(next)
+    }
+
+    /// Persist the UI colour scheme.
+    pub fn set_theme(&self, theme: Theme) -> io::Result<()> {
+        let mut next = self.get();
+        next.theme = theme;
+        self.set(next)
+    }
+
+    /// Record acceptance of a EULA version. Idempotent.
+    pub fn accept_eula(&self, version: &str) -> io::Result<()> {
+        let mut next = self.get();
+        next.accepted_eula_version = Some(version.to_owned());
+        self.set(next)
+    }
+}
+
+/// `<config dir>/settings.json`, or `None` when the OS exposes no config directory.
+fn settings_path() -> Option<PathBuf> {
+    paths::config_dir().map(|dir| dir.join("settings.json"))
+}
+
+/// Read settings, degrading to defaults on a missing, unreadable, or malformed file — a bad
+/// settings file must never stop the app from launching.
+fn read_settings(path: &Path) -> Settings {
+    let raw = match fs::read_to_string(path) {
+        Ok(raw) => raw,
+        Err(e) => {
+            if e.kind() != io::ErrorKind::NotFound {
+                log::warn!("could not read {}: {e} — using defaults", path.display());
+            }
+            return Settings::default();
+        }
+    };
+
+    let mut settings: Settings = match serde_json::from_str(&raw) {
+        Ok(settings) => settings,
+        Err(e) => {
+            log::warn!(
+                "{} is not valid settings JSON: {e} — using defaults",
+                path.display()
+            );
+            return Settings::default();
+        }
+    };
+    settings.window.clamp();
+    settings
+}
+
+/// Write via a sibling temp file + rename, so an interrupted write never truncates the real
+/// file. The temp name is derived from the target so concurrent stores don't collide.
+fn write_atomic(path: &Path, content: &str) -> io::Result<()> {
+    let mut temp = path.as_os_str().to_owned();
+    temp.push(".tmp");
+    let temp = PathBuf::from(temp);
+
+    let mut file = fs::File::create(&temp)?;
+    file.write_all(content.as_bytes())?;
+    file.sync_all()?;
+    drop(file);
+
+    fs::rename(&temp, path).inspect_err(|_| {
+        let _ = fs::remove_file(&temp);
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    use super::*;
+
+    /// A unique scratch dir per test — no global temp-file collisions between test threads.
+    fn scratch(name: &str) -> PathBuf {
+        static COUNTER: AtomicU32 = AtomicU32::new(0);
+        let n = COUNTER.fetch_add(1, Ordering::Relaxed);
+        let dir = std::env::temp_dir().join(format!(
+            "freally-player-settings-{}-{name}-{n}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&dir).expect("create scratch dir");
+        dir.join("settings.json")
+    }
+
+    #[test]
+    fn defaults_when_the_file_does_not_exist() {
+        let store = SettingsStore::load_from(scratch("missing"));
+        assert_eq!(store.get(), Settings::default());
+    }
+
+    #[test]
+    fn settings_round_trip_through_the_file() {
+        let path = scratch("round-trip");
+        let store = SettingsStore::load_from(path.clone());
+        store
+            .set_window(WindowSettings {
+                width: 1600,
+                height: 900,
+                maximized: true,
+            })
+            .expect("persist settings");
+
+        let reloaded = SettingsStore::load_from(path).get();
+        assert_eq!(reloaded.window.width, 1600);
+        assert_eq!(reloaded.window.height, 900);
+        assert!(reloaded.window.maximized);
+        assert_eq!(reloaded.schema_version, SCHEMA_VERSION);
+    }
+
+    #[test]
+    fn malformed_json_degrades_to_defaults_instead_of_failing() {
+        let path = scratch("malformed");
+        fs::write(&path, "{ not json").expect("write malformed file");
+        assert_eq!(SettingsStore::load_from(path).get(), Settings::default());
+    }
+
+    #[test]
+    fn unreachable_geometry_is_clamped_back_to_the_default() {
+        let path = scratch("clamp");
+        fs::write(&path, r#"{"window":{"width":1,"height":9999999}}"#).expect("write file");
+        let window = SettingsStore::load_from(path).get().window;
+        assert_eq!(window.width, WindowSettings::default().width);
+        assert_eq!(window.height, WindowSettings::default().height);
+    }
+
+    #[test]
+    fn eula_acceptance_persists_and_is_idempotent() {
+        let path = scratch("eula");
+        let store = SettingsStore::load_from(path.clone());
+        assert_eq!(store.get().accepted_eula_version, None);
+
+        store.accept_eula("2026-07-01").expect("accept once");
+        store.accept_eula("2026-07-01").expect("accept twice");
+
+        let reloaded = SettingsStore::load_from(path).get();
+        assert_eq!(
+            reloaded.accepted_eula_version.as_deref(),
+            Some("2026-07-01")
+        );
+    }
+
+    #[test]
+    fn eula_acceptance_survives_an_unrelated_settings_write() {
+        let path = scratch("eula-survives");
+        let store = SettingsStore::load_from(path);
+        store.accept_eula("2026-07-01").expect("accept");
+        store
+            .set_window(WindowSettings {
+                width: 1024,
+                height: 640,
+                maximized: false,
+            })
+            .expect("persist geometry");
+
+        assert_eq!(
+            store.get().accepted_eula_version.as_deref(),
+            Some("2026-07-01")
+        );
+    }
+
+    #[test]
+    fn a_partial_file_keeps_the_defaults_for_absent_fields() {
+        let path = scratch("partial");
+        fs::write(&path, r#"{"window":{"maximized":true}}"#).expect("write file");
+        let settings = SettingsStore::load_from(path).get();
+        assert!(settings.window.maximized);
+        assert_eq!(settings.window.width, WindowSettings::default().width);
+    }
+}

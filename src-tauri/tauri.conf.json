@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Freally Player",
+  "identifier": "com.freally.player",
+  "mainBinaryName": "freally-player",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../ui/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Freally Player",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 560,
+        "center": true,
+        "resizable": true,
+        "backgroundColor": "#0a0a0b"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "nsis", "app", "dmg", "appimage", "deb", "rpm"],
+    "category": "Video",
+    "shortDescription": "Plays anything. Beautifully. No ads, no spyware.",
+    "longDescription": "Freally Player is a local-first, cross-platform media player: VLC-class format coverage on a hardware-accelerated native video surface, with a media library, subtitles, and streaming — no ads, no telemetry, no account.",
+    "homepage": "https://mikesruthless12.github.io/freally-player/",
+    "publisher": "Havoc Software",
+    "copyright": "© 2026 Mike Weaver — All Rights Reserved",
+    "licenseFile": "../LICENSE",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "webviewInstallMode": { "type": "downloadBootstrapper" },
+      "nsis": {
+        "installerIcon": "icons/icon.ico"
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0"]
+      }
+    }
+  }
+}

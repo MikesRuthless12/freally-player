@@ -24,6 +24,8 @@ tauri-build.workspace = true
 
 [dependencies]
 tauri.workspace = true
+tauri-plugin-process.workspace = true
+tauri-plugin-dialog.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 directories.workspace = true
@@ -31,6 +33,10 @@ sha2.workspace = true
 fluent.workspace = true
 log.workspace = true
 souvlaki.workspace = true
+# Opt-in anonymous bug reporting (see HAVOC-STANDARD-bug-report-and-updater.md).
+chrono.workspace = true
+sysinfo.workspace = true
+rfd.workspace = true
 
 # Owned library crates (the player core, library, subtitles, streaming, conversion).
 freally-player-core = { path = "../crates/player" }
@@ -43,3 +49,7 @@ freally-convert     = { path = "../crates/convert" }
 # `custom-protocol` is used by Tauri release builds.
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
+# Pass-through to the non-owned decode/render engines in freally-player-core. Off by default
+# because they link against system libraries; P0.3 turns `engine-libmpv` on.
+engine-libmpv = ["freally-player-core/engine-libmpv"]
+engine-ffmpeg = ["freally-player-core/engine-ffmpeg"]

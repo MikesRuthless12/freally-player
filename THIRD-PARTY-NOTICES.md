@@ -32,6 +32,11 @@ components.
 | [`sha2`](https://crates.io/crates/sha2) | integrity hashing | MIT OR Apache-2.0 |
 | [`fluent`](https://crates.io/crates/fluent) | Fluent catalogs for the 18-language UI/engine strings | Apache-2.0 OR MIT |
 | [`log`](https://crates.io/crates/log) | logging facade | MIT OR Apache-2.0 |
+| [`tauri-plugin-process`](https://crates.io/crates/tauri-plugin-process) | lets the UI exit the app (the first-run EULA gate's "Decline & Quit") | MIT OR Apache-2.0 |
+| [Tailwind CSS](https://tailwindcss.com) (`tailwindcss`, `@tailwindcss/vite`) | UI styling — the Havoc dark/light theme tokens | MIT |
+| [`rfd`](https://crates.io/crates/rfd) | native "stopped unexpectedly" message box after a crash (MessageBoxW / NSAlert / GTK3) | MIT |
+| [`sysinfo`](https://crates.io/crates/sysinfo) | process-table lookup so the crash helper waits for the crashed process to be reaped | MIT |
+| [`chrono`](https://crates.io/crates/chrono) | crash-report timestamps (local time with offset, plus UTC) | MIT OR Apache-2.0 |
 
 Transitive Rust dependencies are MIT / Apache-2.0 / BSD / Zlib / MPL. Verify the full set with
 `cargo about` / `cargo deny` before any release.
