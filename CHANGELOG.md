@@ -24,6 +24,18 @@ release).
 - A **written offer for the LGPL source** in [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md),
   naming the exact pinned libmpv build that ships and how to replace it. Bundling the engine makes
   that offer a live obligation rather than a statement of intent.
+- **macOS bundles libmpv's whole dependency chain into the `.app`.** Unlike Windows, where the
+  library is self-contained, the Homebrew libmpv records absolute `/opt/homebrew` paths that do not
+  exist on a user's Mac; `scripts/bundle-macos-dylibs.sh` rewrites the graph into the bundle and
+  fails the build if any absolute path survives.
+- **Linux `.deb`/`.rpm` declare a libmpv dependency** rather than vendoring one, so apt/dnf install
+  it alongside the app — the convention on those platforms.
+
+### Changed (packaging)
+- **macOS ships two DMGs — Apple Silicon and Intel — instead of one universal binary.** Homebrew
+  provides only host-architecture libmpv, so a universal build's x86_64 slice cannot link against
+  an arm64 dylib. (`macos-15-intel` is the last x86_64 image GitHub Actions offers; the
+  architecture goes away around Aug 2027.)
 
 ### Changed
 - **`engine-libmpv` is now a default feature of the app crate** — a plain `cargo build` produces
