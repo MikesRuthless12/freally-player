@@ -90,10 +90,12 @@ mod tests {
     #[test]
     fn attaching_reports_that_this_platform_has_no_surface_yet() {
         let mpv = std::sync::Arc::new(libmpv2::Mpv::new().expect("libmpv should initialise"));
-        let error = attach(HostWindow::Win32(0), mpv, 1280, 720)
-            .expect_err("no surface exists on this platform yet");
-
-        let message = error.to_string();
+        // Deliberately not `expect_err`: that needs `VideoSurface: Debug`, and a type holding
+        // OS window handles has no business deriving Debug just to satisfy a test.
+        let message = match attach(HostWindow::Win32(0), mpv, 1280, 720) {
+            Ok(_) => panic!("this platform has no surface implementation, but attach succeeded"),
+            Err(error) => error.to_string(),
+        };
         assert!(
             message.contains("not implemented on this platform yet"),
             "must say plainly that video output is missing, got: {message}"

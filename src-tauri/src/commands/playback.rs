@@ -11,9 +11,10 @@
 use std::path::Path;
 use std::sync::Mutex;
 
-use freally_player_core::{
-    is_seekable_position, Engine, HostWindow, MediaInfo, NullEngine, PlaybackState,
-};
+use freally_player_core::{is_seekable_position, Engine, MediaInfo, NullEngine, PlaybackState};
+// Only the Windows surface host can be named yet — see `attach_surface`.
+#[cfg(windows)]
+use freally_player_core::HostWindow;
 use tauri::{AppHandle, State};
 
 use crate::events;
@@ -63,6 +64,10 @@ impl PlayerState {
     ///
     /// Failure is logged, not fatal: the rest of the app (settings, bug reporter, audio-only
     /// playback) still works, and the reason reaches the user the first time they open media.
+    ///
+    /// Windows-only for now because [`HostWindow`] can only name a Win32 handle; the macOS
+    /// and Linux hosts add their own variants when those surfaces land.
+    #[cfg(windows)]
     pub fn attach_surface(&self, host: HostWindow, width: u32, height: u32) {
         if let Err(err) = self.with(|engine| engine.attach_surface(host, width, height)) {
             log::error!("could not create the native video surface: {err}");
