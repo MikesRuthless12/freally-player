@@ -20,6 +20,12 @@ src-tauri/gen/
 # the release bundle ships them alongside the app with a source offer.
 /third_party
 
+# --- Test outputs (regenerated; CI uploads them as artifacts) ---
+ui/e2e/screenshots/
+ui/e2e/.output/
+ui/test-results/
+ui/playwright-report/
+
 # --- Packaging / release artifacts ---
 *.msi
 *.exe
