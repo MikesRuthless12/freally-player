@@ -11,14 +11,15 @@ import type {
   EulaStatus,
   MediaInfo,
   PlaybackState,
-  Theme,
+  UserSettings,
 } from "./types";
 
 export const appInfo = (): Promise<AppInfo> => invoke<AppInfo>("app_info");
 
-export const themeGet = (): Promise<Theme> => invoke<Theme>("theme_get");
+export const settingsGet = (): Promise<UserSettings> => invoke<UserSettings>("settings_get");
 
-export const themeSet = (theme: Theme): Promise<void> => invoke<void>("theme_set", { theme });
+export const settingsSet = (settings: UserSettings): Promise<void> =>
+  invoke<void>("settings_set", { settings });
 
 export const eulaStatus = (): Promise<EulaStatus> => invoke<EulaStatus>("eula_status");
 
@@ -56,5 +57,10 @@ export const getState = (): Promise<PlaybackState> => invoke<PlaybackState>("get
  * The native video surface is a sibling window placed *over* the webview, so it has to track
  * this rect exactly or it would cover the chrome.
  */
-export const setVideoRect = (x: number, y: number, width: number, height: number): Promise<void> =>
-  invoke<void>("set_video_rect", { x, y, width, height });
+export const setVideoRect = (
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  visible: boolean,
+): Promise<void> => invoke<void>("set_video_rect", { x, y, width, height, visible });

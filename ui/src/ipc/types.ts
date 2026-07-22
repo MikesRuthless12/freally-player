@@ -9,6 +9,13 @@ export interface AppInfo {
 /** The UI colour scheme (serde `rename_all = "camelCase"` on `settings::Theme`). */
 export type Theme = "dark" | "light";
 
+/** `settings_get` / `settings_set` — the settings the Settings modal owns. */
+export interface UserSettings {
+  theme: Theme;
+  /** Minimising hides to the system tray instead of the taskbar. */
+  minimizeToTray: boolean;
+}
+
 /** `eula_status` — the embedded agreement plus whether this version is accepted. */
 export interface EulaStatus {
   version: string;

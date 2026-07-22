@@ -35,13 +35,13 @@ pub struct VideoSurface {
 impl VideoSurface {
     /// Place the surface at the stage rect, in physical pixels relative to the host window's
     /// client area.
-    pub fn set_rect(&self, x: i32, y: i32, width: u32, height: u32) {
+    pub fn set_rect(&self, x: i32, y: i32, width: u32, height: u32, visible: bool) {
         #[cfg(all(windows, feature = "engine-libmpv"))]
-        self.inner.set_rect(x, y, width, height);
+        self.inner.set_rect(x, y, width, height, visible);
 
         #[cfg(not(all(windows, feature = "engine-libmpv")))]
         {
-            let _ = (x, y, width, height);
+            let _ = (x, y, width, height, visible);
         }
     }
 }

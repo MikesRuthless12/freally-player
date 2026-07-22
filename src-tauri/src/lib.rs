@@ -22,7 +22,7 @@ use serde::Serialize;
 use tauri::{Manager, PhysicalSize, State, WindowEvent};
 
 use commands::playback::PlayerState;
-use settings::{SettingsStore, Theme, WindowSettings};
+use settings::{SettingsStore, UserSettings, WindowSettings};
 
 /// Identity shown in the UI's version banner.
 #[derive(Debug, Clone, Serialize)]
@@ -40,18 +40,67 @@ fn app_info() -> AppInfo {
     }
 }
 
-/// The persisted UI colour scheme.
+/// The settings the Settings modal owns.
 #[tauri::command]
-fn theme_get(store: State<'_, SettingsStore>) -> Theme {
-    store.get().theme
+fn settings_get(store: State<'_, SettingsStore>) -> UserSettings {
+    store.user_settings()
 }
 
-/// Persist the UI colour scheme.
+/// Persist the settings the Settings modal owns.
 #[tauri::command]
-fn theme_set(store: State<'_, SettingsStore>, theme: Theme) -> Result<(), String> {
+fn settings_set(store: State<'_, SettingsStore>, settings: UserSettings) -> Result<(), String> {
     store
-        .set_theme(theme)
-        .map_err(|err| format!("could not save the theme: {err}"))
+        .set_user_settings(settings)
+        .map_err(|err| format!("could not save settings: {err}"))
+}
+
+/// Build the tray icon and its menu.
+///
+/// The tray is always present so "minimize to tray" has somewhere to minimise *to* the moment
+/// the user enables it — creating it on demand would mean the first minimise had nowhere to go.
+fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
+    use tauri::menu::{MenuBuilder, MenuItemBuilder};
+    use tauri::tray::TrayIconBuilder;
+
+    let show = MenuItemBuilder::with_id("show", "Show Freally Player").build(app)?;
+    let quit = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
+    let menu = MenuBuilder::new(app).items(&[&show, &quit]).build()?;
+
+    TrayIconBuilder::with_id("main")
+        .icon(app.default_window_icon().cloned().ok_or_else(|| {
+            tauri::Error::AssetNotFound("the app has no default window icon".to_owned())
+        })?)
+        .tooltip("Freally Player")
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id().as_ref() {
+            "show" => restore_from_tray(app),
+            "quit" => app.exit(0),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            // A plain left click is the obvious "give me the window back" gesture.
+            if let tauri::tray::TrayIconEvent::Click {
+                button: tauri::tray::MouseButton::Left,
+                button_state: tauri::tray::MouseButtonState::Up,
+                ..
+            } = event
+            {
+                restore_from_tray(tray.app_handle());
+            }
+        })
+        .build(app)?;
+    Ok(())
+}
+
+/// Bring the main window back from the tray.
+fn restore_from_tray(app: &tauri::AppHandle) {
+    let Some(window) = app.get_webview_window("main") else {
+        return;
+    };
+    let _ = window.show();
+    let _ = window.unminimize();
+    let _ = window.set_focus();
 }
 
 /// Build and run the app shell.
@@ -78,8 +127,8 @@ pub fn run() {
         .manage(PlayerState::new())
         .invoke_handler(tauri::generate_handler![
             app_info,
-            theme_get,
-            theme_set,
+            settings_get,
+            settings_set,
             eula::eula_status,
             eula::eula_accept,
             commands::playback::open_media,
@@ -97,6 +146,11 @@ pub fn run() {
             restore_window(app.handle());
             attach_video_surface(app.handle());
             spawn_transport_ticker(app.handle());
+            if let Err(e) = build_tray(app.handle()) {
+                // Not fatal: without a tray the app still runs, minimise just behaves
+                // normally. Say why rather than silently ignoring the preference.
+                log::error!("could not create the tray icon: {e}");
+            }
             open_media_from_args(app.handle(), &startup_args);
             Ok(())
         })
@@ -109,6 +163,17 @@ pub fn run() {
             // reports through `set_video_rect` whenever its own layout changes.
             if matches!(event, WindowEvent::CloseRequested { .. }) {
                 save_window(window);
+            }
+            // "Minimize to system tray": hide the window entirely so it leaves the taskbar,
+            // leaving the tray icon as the way back. Off by default, so a user who never
+            // opens Settings sees ordinary minimise behaviour.
+            if window.label() == "main" {
+                if let WindowEvent::Resized(_) = event {
+                    let minimized = window.is_minimized().unwrap_or(false);
+                    if minimized && window.state::<SettingsStore>().get().minimize_to_tray {
+                        let _ = window.hide();
+                    }
+                }
             }
         })
         .run(tauri::generate_context!())

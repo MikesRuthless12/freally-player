@@ -1,7 +1,17 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Core capability for the main player window: the default Tauri core permissions (events, window state, app metadata), process exit for the first-run EULA gate's 'Decline & Quit', and the open-file dialog so the user can pick media. Nothing more — broader permissions are added per feature, never wholesale.",
+  "description": "Core capability for the main player window: the default Tauri core permissions (events, window state, app metadata), process exit for the first-run EULA gate's 'Decline & Quit', the open-file dialog so the user can pick media, and the window controls the custom title bar needs (the window is borderless, so minimise/maximise/close/drag are ours to implement). Nothing more — broader permissions are added per feature, never wholesale.",
   "windows": ["main"],
-  "permissions": ["core:default", "process:allow-exit", "dialog:allow-open"]
+  "permissions": [
+    "core:default",
+    "process:allow-exit",
+    "dialog:allow-open",
+    "core:window:allow-minimize",
+    "core:window:allow-maximize",
+    "core:window:allow-unmaximize",
+    "core:window:allow-is-maximized",
+    "core:window:allow-close",
+    "core:window:allow-start-dragging"
+  ]
 }

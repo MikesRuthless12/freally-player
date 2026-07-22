@@ -34,7 +34,7 @@ homepage = "https://mikesruthless12.github.io/freally-player/"
 
 [workspace.dependencies]
 # --- Desktop shell (non-owned, MIT/Apache) ---
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-build = { version = "2" }
 # Lets the UI exit the app (the EULA gate's "Decline & Quit").
 tauri-plugin-process = "2"

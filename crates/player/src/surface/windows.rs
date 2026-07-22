@@ -46,7 +46,7 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DestroyWindow, GetClassNameW, GetParent, GetWindow,
     GetWindowLongW, GetWindowRect, IsWindowVisible, RegisterClassW, SetWindowLongW, SetWindowPos,
     CS_OWNDC, GWL_EXSTYLE, GWL_STYLE, GW_CHILD, GW_HWNDNEXT, HWND_TOP, SWP_NOACTIVATE, SWP_NOMOVE,
-    SWP_NOSIZE, WNDCLASSW, WS_CHILD, WS_CLIPSIBLINGS, WS_VISIBLE,
+    SWP_NOSIZE, WNDCLASSW, WS_CHILD, WS_CLIPSIBLINGS,
 };
 
 use crate::EngineError;
@@ -168,7 +168,13 @@ impl WglSurface {
     ///
     /// The video window sits **above** the webview (see the module docs), so it must occupy
     /// exactly the stage rect the UI reports — anything larger would cover the chrome.
-    pub fn set_rect(&self, x: i32, y: i32, width: u32, height: u32) {
+    pub fn set_rect(&self, x: i32, y: i32, width: u32, height: u32, visible: bool) {
+        // Hidden unless there is actually a picture to show. The surface sits ON TOP of the
+        // webview, so a visible-but-empty one paints black over the whole UI — including the
+        // first-run gate, which would leave the user staring at a black window.
+        const SWP_SHOWWINDOW: u32 = 0x0040;
+        const SWP_HIDEWINDOW: u32 = 0x0080;
+
         // SAFETY: `hwnd` is a window we created and have not destroyed (we only destroy it in
         // `Drop`, which takes `&mut self`).
         unsafe {
@@ -179,7 +185,12 @@ impl WglSurface {
                 y,
                 width.max(1) as i32,
                 height.max(1) as i32,
-                SWP_NOACTIVATE,
+                SWP_NOACTIVATE
+                    | if visible {
+                        SWP_SHOWWINDOW
+                    } else {
+                        SWP_HIDEWINDOW
+                    },
             );
         }
         self.shared.set_size(width, height);
@@ -441,8 +452,9 @@ fn create_child_window(parent: isize, width: u32, height: u32) -> Result<isize, 
             0,
             CLASS_NAME.as_ptr(),
             std::ptr::null(),
-            // WS_CLIPSIBLINGS keeps us from painting over the webview sibling.
-            WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
+            // Created HIDDEN: it only becomes visible once the UI reports a stage rect for
+            // real media. WS_CLIPSIBLINGS keeps sibling painting correct once it is shown.
+            WS_CHILD | WS_CLIPSIBLINGS,
             0,
             0,
             width.max(1) as i32,

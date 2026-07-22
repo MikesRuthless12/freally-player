@@ -77,6 +77,8 @@ pub struct Settings {
     pub window: WindowSettings,
     /// The UI colour scheme.
     pub theme: Theme,
+    /// Minimising hides to the system tray instead of the taskbar.
+    pub minimize_to_tray: bool,
     /// The EULA version the user accepted, if any. `None` until first acceptance — the app
     /// does not render its main UI until this matches the shipped `EULA_VERSION`.
     pub accepted_eula_version: Option<String>,
@@ -88,9 +90,20 @@ impl Default for Settings {
             schema_version: SCHEMA_VERSION,
             window: WindowSettings::default(),
             theme: Theme::default(),
+            minimize_to_tray: false,
             accepted_eula_version: None,
         }
     }
+}
+
+/// The subset of [`Settings`] the Settings modal owns.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct UserSettings {
+    pub theme: Theme,
+    /// Minimising hides to the system tray instead of the taskbar. Off by default, so a user
+    /// who never opens Settings gets ordinary minimise behaviour.
+    pub minimize_to_tray: bool,
 }
 
 /// The live settings, backed by a JSON file that is rewritten atomically on every change.
@@ -159,11 +172,25 @@ impl SettingsStore {
         self.set(next)
     }
 
-    /// Persist the UI colour scheme.
-    pub fn set_theme(&self, theme: Theme) -> io::Result<()> {
-        let mut next = self.get();
-        next.theme = theme;
-        self.set(next)
+    /// The settings the user can actually change from the Settings modal.
+    pub fn user_settings(&self) -> UserSettings {
+        let current = self.get();
+        UserSettings {
+            theme: current.theme,
+            minimize_to_tray: current.minimize_to_tray,
+        }
+    }
+
+    /// Apply the user-facing settings.
+    ///
+    /// Takes only the fields the modal owns rather than a whole [`Settings`], so writing
+    /// preferences can never clobber EULA acceptance or window geometry — a whole-struct
+    /// setter makes that mistake easy to introduce and hard to spot.
+    pub fn set_user_settings(&self, next: UserSettings) -> io::Result<()> {
+        let mut settings = self.get();
+        settings.theme = next.theme;
+        settings.minimize_to_tray = next.minimize_to_tray;
+        self.set(settings)
     }
 
     /// Record acceptance of a EULA version. Idempotent.
@@ -192,7 +219,13 @@ fn read_settings(path: &Path) -> Settings {
         }
     };
 
-    let mut settings: Settings = match serde_json::from_str(&raw) {
+    // Strip a UTF-8 BOM. `serde_json` rejects one, and plenty of Windows tools write it —
+    // Notepad, and PowerShell's `Set-Content -Encoding utf8`. Without this, a user who edits
+    // their settings by hand silently loses every preference AND their EULA acceptance,
+    // because the parse fails and we fall back to defaults.
+    let raw = raw.strip_prefix('\u{feff}').unwrap_or(&raw);
+
+    let mut settings: Settings = match serde_json::from_str(raw) {
         Ok(settings) => settings,
         Err(e) => {
             log::warn!(
@@ -314,6 +347,70 @@ mod tests {
         assert_eq!(
             store.get().accepted_eula_version.as_deref(),
             Some("2026-07-01")
+        );
+    }
+
+    /// The whole reason `set_user_settings` takes a narrow DTO: changing a preference must
+    /// not silently un-accept the EULA or forget the window size.
+    #[test]
+    fn writing_user_settings_preserves_acceptance_and_geometry() {
+        let path = scratch("user-settings");
+        let store = SettingsStore::load_from(path);
+        store.accept_eula("2026-07-21").expect("accept");
+        store
+            .set_window(WindowSettings {
+                width: 1600,
+                height: 900,
+                maximized: true,
+            })
+            .expect("persist geometry");
+
+        store
+            .set_user_settings(UserSettings {
+                theme: Theme::Light,
+                minimize_to_tray: true,
+            })
+            .expect("persist preferences");
+
+        let after = store.get();
+        assert_eq!(after.theme, Theme::Light);
+        assert!(after.minimize_to_tray);
+        assert_eq!(after.accepted_eula_version.as_deref(), Some("2026-07-21"));
+        assert_eq!(after.window.width, 1600);
+        assert!(after.window.maximized);
+    }
+
+    #[test]
+    fn user_settings_round_trip_through_the_file() {
+        let path = scratch("user-settings-reload");
+        SettingsStore::load_from(path.clone())
+            .set_user_settings(UserSettings {
+                theme: Theme::Light,
+                minimize_to_tray: true,
+            })
+            .expect("persist");
+
+        let reloaded = SettingsStore::load_from(path).user_settings();
+        assert_eq!(reloaded.theme, Theme::Light);
+        assert!(reloaded.minimize_to_tray);
+    }
+
+    /// A hand-edited settings file must survive the BOM that Windows tools add. Losing this
+    /// silently discards every preference *and* the recorded EULA acceptance.
+    #[test]
+    fn a_utf8_bom_does_not_wipe_the_settings() {
+        let path = scratch("bom");
+        fs::write(
+            &path,
+            "\u{feff}{\"theme\":\"light\",\"acceptedEulaVersion\":\"2026-07-21\"}",
+        )
+        .expect("write file with a BOM");
+
+        let settings = SettingsStore::load_from(path).get();
+        assert_eq!(settings.theme, Theme::Light);
+        assert_eq!(
+            settings.accepted_eula_version.as_deref(),
+            Some("2026-07-21")
         );
     }
 

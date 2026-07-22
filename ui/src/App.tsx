@@ -10,14 +10,16 @@ import {
   pause,
   play,
   seek,
+  settingsGet,
+  settingsSet,
   setVideoRect,
-  themeGet,
-  themeSet,
 } from "./ipc/commands";
 import { onPlayerState } from "./ipc/events";
-import type { AppInfo, EulaStatus, PlaybackState, Theme } from "./ipc/types";
+import type { AppInfo, EulaStatus, PlaybackState, Theme, UserSettings } from "./ipc/types";
+import { TitleBar } from "./components/TitleBar";
 import { BugReportDialog } from "./panels/BugReport";
 import { EulaGate } from "./panels/EulaGate";
+import { SettingsModal, type CategoryId } from "./panels/Settings";
 
 /** Dark is the CSS default (no attribute), so only light needs to be stamped on the root. */
 function applyTheme(theme: Theme) {
@@ -49,7 +51,11 @@ export default function App() {
   const [info, setInfo] = useState<AppInfo | null>(null);
   const [infoError, setInfoError] = useState<string | null>(null);
   const [eula, setEula] = useState<EulaStatus | null>(null);
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [settings, setSettings] = useState<UserSettings>({
+    theme: "dark",
+    minimizeToTray: false,
+  });
+  const [settingsCategory, setSettingsCategory] = useState<CategoryId | null>(null);
   const [showBugReport, setShowBugReport] = useState(false);
   const [playback, setPlayback] = useState<PlaybackState>(IDLE);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
@@ -62,13 +68,13 @@ export default function App() {
       (error: unknown) => !cancelled && setInfoError(String(error)),
     );
 
-    themeGet().then(
+    settingsGet().then(
       (stored) => {
         if (cancelled) return;
-        setTheme(stored);
-        applyTheme(stored);
+        setSettings(stored);
+        applyTheme(stored.theme);
       },
-      // A theme we cannot read is not worth blocking on — dark is already applied.
+      // Settings we cannot read are not worth blocking on — dark is already applied.
       () => {},
     );
 
@@ -132,6 +138,7 @@ export default function App() {
   // window drawn OVER the webview (WebView2's transparent pixels reveal the desktop, not a
   // window beneath it), so it must match this rect exactly or it would cover the chrome.
   const stageRef = useRef<HTMLElement | null>(null);
+  const hasMedia = playback.media !== null;
   useEffect(() => {
     if (!accepted) return;
     const stage = stageRef.current;
@@ -141,11 +148,14 @@ export default function App() {
       const rect = stage.getBoundingClientRect();
       // The Rust side works in physical pixels; getBoundingClientRect is in CSS pixels.
       const scale = window.devicePixelRatio || 1;
+      // Hidden until there is a picture: the surface sits OVER the webview, so a visible
+      // empty one paints black across the stage and hides "No media loaded".
       setVideoRect(
         Math.round(rect.left * scale),
         Math.round(rect.top * scale),
         Math.round(rect.width * scale),
         Math.round(rect.height * scale),
+        hasMedia,
       ).catch(() => {
         // No surface on this platform/build — the engine already reports that on open.
       });
@@ -159,16 +169,22 @@ export default function App() {
       observer.disconnect();
       window.removeEventListener("resize", report);
     };
-  }, [accepted]);
+  }, [accepted, hasMedia]);
+
+  // Applied immediately so the UI reflects the choice while it persists.
+  const applySettings = useCallback((next: UserSettings) => {
+    setSettings(next);
+    applyTheme(next.theme);
+  }, []);
 
   const toggleTheme = useCallback(() => {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    applyTheme(next);
-    themeSet(next).catch(() => {
+    const next: Theme = settings.theme === "dark" ? "light" : "dark";
+    const updated = { ...settings, theme: next };
+    applySettings(updated);
+    settingsSet(updated).catch(() => {
       // Persisting failed; the session still honours the choice.
     });
-  }, [theme]);
+  }, [settings, applySettings]);
 
   // Every transport failure is shown verbatim — the honesty invariant forbids a silent
   // failure or a black screen.
@@ -193,11 +209,29 @@ export default function App() {
     [playback.positionSecs],
   );
 
+  // The window is borderless, so the title bar is the ONLY way to move, minimise or close
+  // it — it has to be present on every screen, including the gate. Settings and About are
+  // hidden until the agreement is accepted, since nothing behind the gate is usable yet.
+  const chrome = (body: React.ReactNode, showActions: boolean) => (
+    <div className="relative flex h-full flex-col bg-havoc-bg text-havoc-text">
+      <TitleBar
+        title="Freally Player"
+        showActions={showActions}
+        onOpenSettings={() => setSettingsCategory("general")}
+        onOpenAbout={() => setSettingsCategory("about")}
+      />
+      {body}
+    </div>
+  );
+
   if (eula === null) {
-    return <div className="h-full w-full bg-havoc-bg" />;
+    return chrome(<div className="flex-1" />, false);
   }
   if (!eula.accepted) {
-    return <EulaGate status={eula} onAccepted={() => setEula({ ...eula, accepted: true })} />;
+    return chrome(
+      <EulaGate status={eula} onAccepted={() => setEula({ ...eula, accepted: true })} />,
+      false,
+    );
   }
 
   const control =
@@ -207,8 +241,8 @@ export default function App() {
   // opaque throughout — the picture covers this area rather than showing through it.
   const showingVideo = playback.media !== null;
 
-  return (
-    <div className="relative flex h-full flex-col bg-havoc-bg text-havoc-text">
+  return chrome(
+    <>
       <main className="flex flex-1 items-center justify-center overflow-hidden">
         <section
           ref={stageRef}
@@ -285,10 +319,10 @@ export default function App() {
           <button
             type="button"
             onClick={toggleTheme}
-            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            aria-label={`Switch to ${settings.theme === "dark" ? "light" : "dark"} mode`}
             className="text-havoc-muted hover:text-havoc-text"
           >
-            {theme === "dark" ? "Light mode" : "Dark mode"}
+            {settings.theme === "dark" ? "Light mode" : "Dark mode"}
           </button>
           {infoError ? (
             <span className="text-havoc-muted">version unavailable</span>
@@ -298,7 +332,18 @@ export default function App() {
         </div>
       </footer>
 
+      {settingsCategory && (
+        <SettingsModal
+          settings={settings}
+          info={info}
+          initialCategory={settingsCategory}
+          onChange={applySettings}
+          onClose={() => setSettingsCategory(null)}
+        />
+      )}
+
       {showBugReport && <BugReportDialog onClose={() => setShowBugReport(false)} />}
-    </div>
+    </>,
+    true,
   );
 }

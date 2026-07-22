@@ -80,8 +80,8 @@ impl PlayerState {
     }
 
     /// Keep the video surface matched to the stage rect the UI reports.
-    pub fn set_surface_rect(&self, x: i32, y: i32, width: u32, height: u32) {
-        self.with(|engine| engine.set_surface_rect(x, y, width, height));
+    pub fn set_surface_rect(&self, x: i32, y: i32, width: u32, height: u32, visible: bool) {
+        self.with(|engine| engine.set_surface_rect(x, y, width, height, visible));
     }
 }
 
@@ -186,8 +186,15 @@ pub fn get_state(player: State<'_, PlayerState>) -> PlaybackState {
 /// the stage element's geometry exactly or it would cover the chrome. The UI reports this
 /// whenever the stage is laid out or resized.
 #[tauri::command]
-pub fn set_video_rect(player: State<'_, PlayerState>, x: i32, y: i32, width: u32, height: u32) {
-    player.set_surface_rect(x, y, width, height);
+pub fn set_video_rect(
+    player: State<'_, PlayerState>,
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+    visible: bool,
+) {
+    player.set_surface_rect(x, y, width, height, visible);
 }
 
 #[cfg(test)]

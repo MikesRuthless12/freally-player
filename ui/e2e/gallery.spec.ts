@@ -68,6 +68,11 @@ test("02 — player shell, nothing loaded", async ({ page }) => {
   await boot(page);
   await playerReady(page);
 
+  // With nothing open the native surface must stay HIDDEN, or it paints black over the
+  // stage and hides this very message.
+  await expect.poll(() => invoked(page)).toContain("set_video_rect");
+  expect((await lastArgs(page, "set_video_rect"))?.visible).toBe(false);
+
   await expect(page.getByText("No media loaded")).toBeVisible();
   await expect(page.getByLabel("Video stage")).toBeVisible();
   await expect(page.getByText("v0.10.0")).toBeVisible();
@@ -212,6 +217,85 @@ test("13 — the video stage stays clear for the native surface", async ({ page 
   expect(rect).toBeDefined();
   expect(Number(rect?.width)).toBeGreaterThan(0);
   expect(Number(rect?.height)).toBeGreaterThan(0);
+  // Visible only because media is open — an empty surface would paint black over the stage.
+  expect(rect?.visible).toBe(true);
+});
+
+test("14 — custom title bar, centred title and window controls", async ({ page }) => {
+  await boot(page);
+  await playerReady(page);
+
+  // The window is borderless, so these are the only way to move/minimise/close it.
+  for (const control of ["Minimize", "Maximize", "Close", "Settings", "About"]) {
+    await expect(page.getByRole("button", { name: control })).toBeVisible();
+  }
+
+  // The title is centred in the WINDOW, not in the space the buttons leave over: its box
+  // spans the full width, so its own centre and the window's centre coincide.
+  const title = page.getByText("Freally Player", { exact: true }).first();
+  const titleBox = await title.boundingBox();
+  const viewport = page.viewportSize();
+  expect(titleBox).not.toBeNull();
+  expect(viewport).not.toBeNull();
+  const titleCentre = titleBox!.x + titleBox!.width / 2;
+  expect(Math.abs(titleCentre - viewport!.width / 2)).toBeLessThan(2);
+
+  await page.screenshot({ path: `${DIR}/14-title-bar.png` });
+});
+
+test("15 — Settings modal, General with minimize to tray", async ({ page }) => {
+  await boot(page);
+  await playerReady(page);
+
+  await page.getByRole("button", { name: "Settings" }).click();
+  const dialog = page.getByRole("dialog", { name: "Settings" });
+  await dialog.waitFor({ timeout: 10_000 });
+
+  // Two-pane shell: category sidebar on the left, the selected pane on the right. Scoped to
+  // the dialog — "About" also names the title-bar icon that opened it.
+  for (const category of ["General", "Appearance", "About"]) {
+    await expect(dialog.getByRole("button", { name: category, exact: true })).toBeVisible();
+  }
+  const tray = dialog.getByRole("checkbox", { name: /Minimize to system tray/ });
+  await expect(tray).toBeVisible();
+  await expect(tray).not.toBeChecked();
+
+  await tray.click();
+  await expect.poll(() => invoked(page)).toContain("settings_set");
+  expect(await lastArgs(page, "settings_set")).toEqual({
+    settings: { theme: "dark", minimizeToTray: true },
+  });
+
+  await page.screenshot({ path: `${DIR}/15-settings-general.png` });
+});
+
+test("16 — Settings modal, Appearance and About panes", async ({ page }) => {
+  await boot(page);
+  await playerReady(page);
+
+  await page.getByRole("button", { name: "Settings" }).click();
+  const dialog = page.getByRole("dialog", { name: "Settings" });
+  await dialog.waitFor({ timeout: 10_000 });
+
+  await dialog.getByRole("button", { name: "Appearance", exact: true }).click();
+  await expect(dialog.getByRole("button", { name: "dark", exact: true })).toBeVisible();
+  await page.screenshot({ path: `${DIR}/16-settings-appearance.png` });
+
+  await dialog.getByRole("button", { name: "About", exact: true }).click();
+  await expect(dialog.getByText(/All Rights Reserved/)).toBeVisible();
+  await expect(dialog.getByText("0.10.0")).toBeVisible();
+  await page.screenshot({ path: `${DIR}/16b-settings-about.png` });
+});
+
+test("17 — the tray preference is reflected when already enabled", async ({ page }) => {
+  await boot(page, "?tray=1");
+  await playerReady(page);
+
+  await page.getByRole("button", { name: "Settings" }).click();
+  const dialog = page.getByRole("dialog", { name: "Settings" });
+  await dialog.waitFor({ timeout: 10_000 });
+
+  await expect(dialog.getByRole("checkbox", { name: /Minimize to system tray/ })).toBeChecked();
 });
 
 test("07 — bug reporter auto-surfaces a pending crash", async ({ page }) => {

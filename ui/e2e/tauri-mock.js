@@ -45,8 +45,8 @@
 
   const RESP = {
     app_info: { name: "Freally Player", version: "0.10.0" },
-    theme_get: theme,
-    theme_set: null,
+    settings_get: { theme, minimizeToTray: params.get("tray") === "1" },
+    settings_set: null,
     eula_status: { version: "2026-07-21", text: EULA_TEXT, accepted: eulaAccepted },
     eula_accept: null,
     get_state: media

@@ -123,9 +123,9 @@ impl Engine for MpvEngine {
         Ok(())
     }
 
-    fn set_surface_rect(&self, x: i32, y: i32, width: u32, height: u32) {
+    fn set_surface_rect(&self, x: i32, y: i32, width: u32, height: u32, visible: bool) {
         if let Some(surface) = &self.surface {
-            surface.set_rect(x, y, width, height);
+            surface.set_rect(x, y, width, height, visible);
         }
     }
 

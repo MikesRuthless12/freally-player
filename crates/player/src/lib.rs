@@ -126,8 +126,8 @@ pub trait Engine: Send {
 
     /// Place the video surface at the stage rect, in physical pixels relative to the host
     /// window's client area. A no-op when there is no surface.
-    fn set_surface_rect(&self, x: i32, y: i32, width: u32, height: u32) {
-        let _ = (x, y, width, height);
+    fn set_surface_rect(&self, x: i32, y: i32, width: u32, height: u32, visible: bool) {
+        let _ = (x, y, width, height, visible);
     }
 }
 
