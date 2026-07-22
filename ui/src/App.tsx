@@ -16,6 +16,8 @@ import {
 } from "./ipc/commands";
 import { onPlayerState } from "./ipc/events";
 import type { AppInfo, EulaStatus, PlaybackState, Theme, UserSettings } from "./ipc/types";
+import { applyLocale, I18nContext, useTranslator } from "./i18n";
+import { resolveLocale } from "./i18n/locales";
 import { TitleBar } from "./components/TitleBar";
 import { BugReportDialog } from "./panels/BugReport";
 import { EulaGate } from "./panels/EulaGate";
@@ -54,11 +56,25 @@ export default function App() {
   const [settings, setSettings] = useState<UserSettings>({
     theme: "dark",
     minimizeToTray: false,
+    language: null,
   });
   const [settingsCategory, setSettingsCategory] = useState<CategoryId | null>(null);
   const [showBugReport, setShowBugReport] = useState(false);
   const [playback, setPlayback] = useState<PlaybackState>(IDLE);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
+
+  // The active locale is DERIVED from the stored setting rather than held as its own state:
+  // one source of truth means the language and what is persisted can never drift apart. With
+  // nothing stored — a first run — `resolveLocale` takes the OS's preference.
+  const locale = resolveLocale(settings.language);
+  const t = useTranslator(locale);
+
+  // `<html lang>` is not only for assistive tech: `styles/fonts.css` keys its per-script font
+  // stacks off `:lang()`, so this is what makes each language render in the right letterforms.
+  // `dir` mirrors the shell for Arabic.
+  useEffect(() => {
+    applyLocale(locale);
+  }, [locale]);
 
   useEffect(() => {
     let cancelled = false;
@@ -213,15 +229,17 @@ export default function App() {
   // it — it has to be present on every screen, including the gate. Settings and About are
   // hidden until the agreement is accepted, since nothing behind the gate is usable yet.
   const chrome = (body: React.ReactNode, showActions: boolean) => (
-    <div className="relative flex h-full flex-col bg-havoc-bg text-havoc-text">
-      <TitleBar
-        title="Freally Player"
-        showActions={showActions}
-        onOpenSettings={() => setSettingsCategory("general")}
-        onOpenAbout={() => setSettingsCategory("about")}
-      />
-      {body}
-    </div>
+    <I18nContext.Provider value={t}>
+      <div className="relative flex h-full flex-col bg-havoc-bg text-havoc-text">
+        <TitleBar
+          title="Freally Player"
+          showActions={showActions}
+          onOpenSettings={() => setSettingsCategory("general")}
+          onOpenAbout={() => setSettingsCategory("about")}
+        />
+        {body}
+      </div>
+    </I18nContext.Provider>
   );
 
   if (eula === null) {
@@ -246,13 +264,13 @@ export default function App() {
       <main className="flex flex-1 items-center justify-center overflow-hidden">
         <section
           ref={stageRef}
-          aria-label="Video stage"
+          aria-label={t("stage-label")}
           className="flex h-full w-full flex-col items-center justify-center gap-2 px-6 text-center"
         >
           {/* Nothing is drawn over the picture: while media is open this region stays empty
               and transparent so the native surface shows through. */}
           {!showingVideo && (
-            <p className="m-0 text-sm tracking-wide text-havoc-muted">No media loaded</p>
+            <p className="m-0 text-sm tracking-wide text-havoc-muted">{t("stage-empty")}</p>
           )}
           {playbackError && (
             <p
@@ -267,7 +285,7 @@ export default function App() {
 
       <div className="flex items-center gap-2 border-t border-havoc-border bg-havoc-panel px-4 py-2">
         <button type="button" onClick={() => void chooseMedia()} className={control}>
-          Open media…
+          {t("transport-open")}
         </button>
         <button
           type="button"
@@ -277,7 +295,7 @@ export default function App() {
           }}
           className={control}
         >
-          Play
+          {t("transport-play")}
         </button>
         <button
           type="button"
@@ -287,17 +305,24 @@ export default function App() {
           }}
           className={control}
         >
-          Pause
+          {t("transport-pause")}
         </button>
-        <button type="button" onClick={() => relativeSeek(-10)} className={control}>
-          −10s
+        {/* A signed number with a unit is an LTR expression in every language, so these two
+            labels are pinned LTR. Without it the leading "−" is a bidi-neutral character: in
+            the Arabic shell it resolves to the paragraph direction and lands on the far side
+            of the digits, rendering "−10 ث" as "ث 10−" — right in reading order, but read as
+            "10 minus" by anyone reading the numerals. Every other locale is LTR anyway, so
+            this changes nothing for them. */}
+        <button type="button" onClick={() => relativeSeek(-10)} dir="ltr" className={control}>
+          {t("transport-back")}
         </button>
-        <button type="button" onClick={() => relativeSeek(10)} className={control}>
-          +10s
+        <button type="button" onClick={() => relativeSeek(10)} dir="ltr" className={control}>
+          {t("transport-forward")}
         </button>
         {playback.media && (
-          <span className="ml-2 truncate text-xs text-havoc-muted">
-            {playback.media.title} · {playback.status} · {formatTime(playback.positionSecs)}
+          <span className="ms-2 truncate text-xs text-havoc-muted">
+            {playback.media.title} · {t(`status-${playback.status}`)} ·{" "}
+            {formatTime(playback.positionSecs)}
             {playback.media.durationSecs !== null &&
               ` / ${formatTime(playback.media.durationSecs)}`}
           </span>
@@ -314,18 +339,20 @@ export default function App() {
             onClick={() => setShowBugReport(true)}
             className="text-havoc-muted hover:text-havoc-text"
           >
-            Report a bug
+            {t("footer-report-bug")}
           </button>
           <button
             type="button"
             onClick={toggleTheme}
-            aria-label={`Switch to ${settings.theme === "dark" ? "light" : "dark"} mode`}
+            aria-label={
+              settings.theme === "dark" ? t("footer-switch-to-light") : t("footer-switch-to-dark")
+            }
             className="text-havoc-muted hover:text-havoc-text"
           >
-            {settings.theme === "dark" ? "Light mode" : "Dark mode"}
+            {settings.theme === "dark" ? t("footer-theme-light") : t("footer-theme-dark")}
           </button>
           {infoError ? (
-            <span className="text-havoc-muted">version unavailable</span>
+            <span className="text-havoc-muted">{t("footer-version-unavailable")}</span>
           ) : (
             <span className="text-havoc-muted">{info ? `v${info.version}` : "…"}</span>
           )}

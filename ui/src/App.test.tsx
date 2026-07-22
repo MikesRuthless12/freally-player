@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
+import { LOCALES } from "./i18n/locales";
 import type { PlaybackState } from "./ipc/types";
 
 const invoke = vi.hoisted(() => vi.fn());
@@ -34,7 +35,7 @@ const IDLE: PlaybackState = { status: "idle", positionSecs: 0, media: null };
 function backend(overrides: Record<string, unknown> = {}) {
   const responses: Record<string, unknown> = {
     app_info: { name: "Freally Player", version: "0.1.0" },
-    settings_get: { theme: "dark", minimizeToTray: false },
+    settings_get: { theme: "dark", minimizeToTray: false, language: null },
     settings_set: undefined,
     eula_status: { version: "2026-07-01", text: "# EULA\n\nTerms.", accepted: true },
     eula_accept: undefined,
@@ -97,6 +98,8 @@ describe("App", () => {
       });
     });
     document.documentElement.removeAttribute("data-theme");
+    document.documentElement.removeAttribute("lang");
+    document.documentElement.removeAttribute("dir");
   });
 
   it("shows the version reported by the app_info command", async () => {
@@ -170,7 +173,7 @@ describe("App", () => {
 
       expect(document.documentElement.getAttribute("data-theme")).toBe("light");
       expect(invoke).toHaveBeenCalledWith("settings_set", {
-        settings: { theme: "light", minimizeToTray: false },
+        settings: { theme: "light", minimizeToTray: false, language: null },
       });
 
       await userEvent.click(await screen.findByRole("button", { name: "Switch to dark mode" }));
@@ -297,7 +300,7 @@ describe("App", () => {
       await userEvent.click(screen.getByRole("checkbox", { name: /Minimize to system tray/ }));
 
       expect(invoke).toHaveBeenCalledWith("settings_set", {
-        settings: { theme: "dark", minimizeToTray: true },
+        settings: { theme: "dark", minimizeToTray: true, language: null },
       });
     });
 
@@ -325,6 +328,96 @@ describe("App", () => {
       await waitFor(() =>
         expect(screen.queryByRole("dialog", { name: "Settings" })).not.toBeInTheDocument(),
       );
+    });
+  });
+
+  describe("the language picker", () => {
+    /** The autonyms as the Language pane renders them, in document order. */
+    const renderedOrder = () => {
+      const autonyms: string[] = LOCALES.map((l) => l.autonym);
+      return screen
+        .getAllByRole("button")
+        .map((button) => button.textContent ?? "")
+        .filter((text) => autonyms.includes(text));
+    };
+
+    const openLanguagePane = async () => {
+      await screen.findByLabelText("Video stage");
+      await userEvent.click(screen.getByRole("button", { name: "Settings" }));
+      await userEvent.click(await screen.findByRole("button", { name: "Language" }));
+    };
+
+    it("applies a language immediately and persists it", async () => {
+      backend();
+      render(<App />);
+      await openLanguagePane();
+
+      await userEvent.click(screen.getByRole("button", { name: "日本語" }));
+
+      expect(invoke).toHaveBeenCalledWith("settings_set", {
+        settings: { theme: "dark", minimizeToTray: false, language: "ja" },
+      });
+      // Actually in Japanese, in the same session — no reload, no restart.
+      expect(await screen.findByRole("button", { name: "再生" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Play" })).not.toBeInTheDocument();
+    });
+
+    it("starts in the stored language", async () => {
+      backend({ settings_get: { theme: "dark", minimizeToTray: false, language: "fr" } });
+      render(<App />);
+
+      expect(await screen.findByRole("button", { name: "Lecture" })).toBeInTheDocument();
+      await waitFor(() => expect(document.documentElement.lang).toBe("fr"));
+    });
+
+    /**
+     * `<html lang>` is what `styles/fonts.css` keys its per-script font stacks off, so this is
+     * the difference between Japanese rendering in JP letterforms and in Simplified Chinese
+     * ones. `dir` mirrors the shell for Arabic — the only RTL locale of the 18.
+     */
+    it("stamps the document with the language and its direction", async () => {
+      backend({ settings_get: { theme: "dark", minimizeToTray: false, language: "ar" } });
+      render(<App />);
+      await screen.findByLabelText("منطقة الفيديو");
+
+      await waitFor(() => expect(document.documentElement.lang).toBe("ar"));
+      expect(document.documentElement.dir).toBe("rtl");
+    });
+
+    it("returns to left-to-right when leaving Arabic", async () => {
+      backend({ settings_get: { theme: "dark", minimizeToTray: false, language: "ar" } });
+      render(<App />);
+      await waitFor(() => expect(document.documentElement.dir).toBe("rtl"));
+
+      await userEvent.click(screen.getByRole("button", { name: "الإعدادات" }));
+      await userEvent.click(await screen.findByRole("button", { name: "اللغة" }));
+      await userEvent.click(screen.getByRole("button", { name: "Deutsch" }));
+
+      await waitFor(() => expect(document.documentElement.dir).toBe("ltr"));
+      expect(document.documentElement.lang).toBe("de");
+    });
+
+    /**
+     * English first, then alphabetical by the language's own name — and the SAME order in
+     * every language. Collation is locale-sensitive, so sorting this list at render time would
+     * rearrange the picker under the user each time they switched (Arabic lifts العربية to the
+     * top, Russian lifts Cyrillic, Chinese lifts the CJK names). The order is a baked-in
+     * literal for exactly that reason; this holds the rendered list to it.
+     */
+    it("lists English first and keeps one order in every language", async () => {
+      backend();
+      render(<App />);
+      await openLanguagePane();
+
+      const expected = LOCALES.map((l) => l.autonym);
+      expect(expected[0]).toBe("English");
+      expect(renderedOrder()).toEqual(expected);
+
+      for (const code of ["ar", "ja", "ru", "zh-CN"]) {
+        const autonym = LOCALES.find((l) => l.code === code)!.autonym;
+        await userEvent.click(screen.getByRole("button", { name: autonym }));
+        expect(renderedOrder(), `the picker reordered itself in ${code}`).toEqual(expected);
+      }
     });
   });
 

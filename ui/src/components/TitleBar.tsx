@@ -1,6 +1,8 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useCallback, useEffect, useState } from "react";
 
+import { useT } from "../i18n";
+
 /**
  * The app's own title bar. The window is borderless (`decorations: false`), so minimise,
  * maximise/restore, close and dragging are ours to provide.
@@ -22,6 +24,7 @@ export function TitleBar({
   onOpenSettings: () => void;
   onOpenAbout: () => void;
 }) {
+  const t = useT();
   const [maximized, setMaximized] = useState(false);
 
   // Keep the maximise/restore glyph honest when the window changes by any other route —
@@ -66,7 +69,7 @@ export function TitleBar({
   return (
     <header
       data-tauri-drag-region
-      className="relative flex h-9 shrink-0 items-center justify-end border-b border-havoc-border bg-havoc-panel pl-3 select-none"
+      className="relative flex h-9 shrink-0 items-center justify-end border-b border-havoc-border bg-havoc-panel ps-3 select-none"
     >
       {/* Centred independently of the buttons, so it stays centred in the window rather
           than in whatever space the controls leave over. */}
@@ -78,12 +81,12 @@ export function TitleBar({
       </span>
 
       {showActions && (
-        <div className="z-10 flex items-center gap-1 pr-1">
+        <div className="z-10 flex items-center gap-1 pe-1">
           <button
             type="button"
             onClick={onOpenSettings}
-            aria-label="Settings"
-            title="Settings"
+            aria-label={t("titlebar-settings")}
+            title={t("titlebar-settings")}
             className={action}
           >
             <GearIcon />
@@ -91,8 +94,8 @@ export function TitleBar({
           <button
             type="button"
             onClick={onOpenAbout}
-            aria-label="About"
-            title="About"
+            aria-label={t("titlebar-about")}
+            title={t("titlebar-about")}
             className={action}
           >
             <InfoIcon />
@@ -101,7 +104,12 @@ export function TitleBar({
       )}
 
       <div className="z-10 flex items-center">
-        <button type="button" onClick={minimize} aria-label="Minimize" className={control}>
+        <button
+          type="button"
+          onClick={minimize}
+          aria-label={t("titlebar-minimize")}
+          className={control}
+        >
           <svg viewBox="0 0 12 12" className="h-3 w-3" aria-hidden="true">
             <path d="M2 6h8" stroke="currentColor" strokeWidth="1.2" />
           </svg>
@@ -109,7 +117,7 @@ export function TitleBar({
         <button
           type="button"
           onClick={toggleMaximize}
-          aria-label={maximized ? "Restore" : "Maximize"}
+          aria-label={maximized ? t("titlebar-restore") : t("titlebar-maximize")}
           className={control}
         >
           {maximized ? (
@@ -126,7 +134,7 @@ export function TitleBar({
         <button
           type="button"
           onClick={close}
-          aria-label="Close"
+          aria-label={t("titlebar-close")}
           className="grid h-8 w-11 place-items-center text-havoc-muted transition-colors hover:bg-red-600 hover:text-white"
         >
           <svg viewBox="0 0 12 12" className="h-3 w-3" aria-hidden="true">

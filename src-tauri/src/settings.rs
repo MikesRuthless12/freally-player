@@ -79,6 +79,14 @@ pub struct Settings {
     pub theme: Theme,
     /// Minimising hides to the system tray instead of the taskbar.
     pub minimize_to_tray: bool,
+    /// The chosen UI language as a BCP-47 tag, or `None` until the user picks one — in which
+    /// case the first run detects it from the OS.
+    ///
+    /// Deliberately an unvalidated `String`: which locales exist is decided by which catalogs
+    /// ship, and those live in the UI (`ui/src/i18n/`). Duplicating that list here would mean
+    /// two sources of truth that drift, so the UI owns the question and falls back to English
+    /// for a tag it does not ship — including a hand-edited nonsense one.
+    pub language: Option<String>,
     /// The EULA version the user accepted, if any. `None` until first acceptance — the app
     /// does not render its main UI until this matches the shipped `EULA_VERSION`.
     pub accepted_eula_version: Option<String>,
@@ -91,19 +99,22 @@ impl Default for Settings {
             window: WindowSettings::default(),
             theme: Theme::default(),
             minimize_to_tray: false,
+            language: None,
             accepted_eula_version: None,
         }
     }
 }
 
 /// The subset of [`Settings`] the Settings modal owns.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct UserSettings {
     pub theme: Theme,
     /// Minimising hides to the system tray instead of the taskbar. Off by default, so a user
     /// who never opens Settings gets ordinary minimise behaviour.
     pub minimize_to_tray: bool,
+    /// The chosen UI language, or `None` while the first run is still following the OS.
+    pub language: Option<String>,
 }
 
 /// The live settings, backed by a JSON file that is rewritten atomically on every change.
@@ -178,6 +189,7 @@ impl SettingsStore {
         UserSettings {
             theme: current.theme,
             minimize_to_tray: current.minimize_to_tray,
+            language: current.language,
         }
     }
 
@@ -190,6 +202,7 @@ impl SettingsStore {
         let mut settings = self.get();
         settings.theme = next.theme;
         settings.minimize_to_tray = next.minimize_to_tray;
+        settings.language = next.language;
         self.set(settings)
     }
 
@@ -369,12 +382,14 @@ mod tests {
             .set_user_settings(UserSettings {
                 theme: Theme::Light,
                 minimize_to_tray: true,
+                language: Some("ja".to_owned()),
             })
             .expect("persist preferences");
 
         let after = store.get();
         assert_eq!(after.theme, Theme::Light);
         assert!(after.minimize_to_tray);
+        assert_eq!(after.language.as_deref(), Some("ja"));
         assert_eq!(after.accepted_eula_version.as_deref(), Some("2026-07-21"));
         assert_eq!(after.window.width, 1600);
         assert!(after.window.maximized);
@@ -387,12 +402,57 @@ mod tests {
             .set_user_settings(UserSettings {
                 theme: Theme::Light,
                 minimize_to_tray: true,
+                language: Some("pt-BR".to_owned()),
             })
             .expect("persist");
 
         let reloaded = SettingsStore::load_from(path).user_settings();
         assert_eq!(reloaded.theme, Theme::Light);
         assert!(reloaded.minimize_to_tray);
+        assert_eq!(reloaded.language.as_deref(), Some("pt-BR"));
+    }
+
+    /// No stored language means "follow the OS", which the UI resolves at runtime. It has to
+    /// stay `None` rather than defaulting to English, or a first run would pin every user to
+    /// English and locale detection would never happen.
+    #[test]
+    fn no_language_is_stored_until_the_user_picks_one() {
+        let path = scratch("language-unset");
+        let store = SettingsStore::load_from(path.clone());
+        assert_eq!(store.get().language, None);
+
+        store
+            .set_user_settings(UserSettings {
+                theme: Theme::Dark,
+                minimize_to_tray: false,
+                language: None,
+            })
+            .expect("persist");
+
+        assert_eq!(
+            SettingsStore::load_from(path).user_settings().language,
+            None
+        );
+    }
+
+    /// A settings file written before the Language pane existed has no `language` key at all.
+    /// It must load as "not chosen yet", not fail the parse and wipe every other preference.
+    #[test]
+    fn a_file_from_before_the_language_setting_still_loads() {
+        let path = scratch("language-absent");
+        fs::write(
+            &path,
+            r#"{"theme":"light","minimizeToTray":true,"acceptedEulaVersion":"2026-07-21"}"#,
+        )
+        .expect("write file");
+
+        let settings = SettingsStore::load_from(path).get();
+        assert_eq!(settings.language, None);
+        assert_eq!(settings.theme, Theme::Light);
+        assert_eq!(
+            settings.accepted_eula_version.as_deref(),
+            Some("2026-07-21")
+        );
     }
 
     /// A hand-edited settings file must survive the BOM that Windows tools add. Losing this

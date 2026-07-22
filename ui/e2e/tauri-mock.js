@@ -45,7 +45,13 @@
 
   const RESP = {
     app_info: { name: "Freally Player", version: "0.10.0" },
-    settings_get: { theme, minimizeToTray: params.get("tray") === "1" },
+    // `?lang=xx` starts in a stored locale; with none, the UI detects one from the browser
+    // exactly as a first run detects it from the OS.
+    settings_get: {
+      theme,
+      minimizeToTray: params.get("tray") === "1",
+      language: params.get("lang"),
+    },
     settings_set: null,
     eula_status: { version: "2026-07-21", text: EULA_TEXT, accepted: eulaAccepted },
     eula_accept: null,
