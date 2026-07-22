@@ -1,5 +1,13 @@
 #!/usr/bin/env node
-// Local CI — run the SAME checks you'd want green before pushing.
+// Local CI — mirrors .github/workflows/ci.yml. Run this and get it GREEN BEFORE PUSHING.
+//
+// This is a Definition-of-Done step, not a convenience: pushing to find out what CI thinks
+// costs ~6 minutes per attempt, and every failure it catches here is one you would otherwise
+// wait on GitHub to discover.
+//
+// What it CANNOT tell you: this machine is one OS. Cross-platform breakage — a `#[cfg]` that
+// only compiles on Windows, a dead-code warning that only fires elsewhere — still shows up
+// first on the CI matrix. Green here means "worth pushing", not "CI will pass".
 //
 // NOTE: This repo has no .github/workflows yet (planning-stage skeleton). It is a
 // Rust-only Cargo workspace with a pinned toolchain (rustfmt + clippy — see
@@ -59,10 +67,33 @@ if (doInstall && hasUi) {
 if (!uiOnly && hasRust) {
   // NOT --all-features: the `engine-libmpv` / `engine-ffmpeg` features link against system
   // media libraries that a plain checkout does not have. Default features are the gate; the
-  // engine features are exercised by the CI jobs that install/vendor libmpv (see P0.3).
+  // engine features get their own steps below when libmpv is actually available.
   step("rust: fmt", "cargo fmt --all --check", repoRoot);
   step("rust: clippy", "cargo clippy --workspace --all-targets -- -D warnings", repoRoot);
   step("rust: test", "cargo test --workspace", repoRoot);
+
+  // Mirrors the `engine` job in .github/workflows/ci.yml: the media engine and the native
+  // video surface. Skipped (not failed) when libmpv is absent, since the default build must
+  // work without it.
+  const hasVendoredMpv = existsSync(join(repoRoot, "third_party", "libmpv"));
+  const hasSystemMpv = process.platform !== "win32" && have("pkg-config --exists mpv");
+  if (hasVendoredMpv || hasSystemMpv || process.env.MPV_LIB_DIR) {
+    step(
+      "rust: clippy (engine)",
+      "cargo clippy -p freally-player --all-targets --features engine-libmpv -- -D warnings",
+      repoRoot,
+    );
+    step(
+      "rust: test (engine)",
+      "cargo test -p freally-player-core --features engine-libmpv",
+      repoRoot,
+    );
+  } else {
+    console.log(
+      "• note: no libmpv found — skipping the engine checks. Run `node scripts/vendor-libmpv.mjs`\n" +
+        "        (Windows) or install libmpv-dev / `brew install mpv` to exercise them.",
+    );
+  }
   // cargo-deny only runs when it's both configured (deny.toml) and installed.
   if (hasDeny && have("cargo deny --version")) {
     step("rust: cargo-deny", "cargo deny check", repoRoot);

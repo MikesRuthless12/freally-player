@@ -242,7 +242,9 @@ describe("App", () => {
       render(<App />);
 
       expect(await screen.findByRole("dialog", { name: "Report a bug" })).toBeInTheDocument();
-      expect(screen.getByText(/engine went away/)).toBeInTheDocument();
+      // `find`, not `get`: the dialog loads its own context, so the crash excerpt appears a
+      // tick after the dialog itself. A sync assertion here passes or fails on timing.
+      expect(await screen.findByText(/engine went away/)).toBeInTheDocument();
     });
 
     it("stays closed when there is no pending crash, and opens on request", async () => {
