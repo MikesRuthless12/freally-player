@@ -31,10 +31,12 @@ echo "--- before: libmpv reference in the executable ---"
 otool -L "$BINARY" | grep -i mpv || { echo "::error::the binary does not link libmpv at all"; exit 1; }
 
 # -b bundle the dependencies, -x the executable to fix, -d where the copies go, -p what the
-# rewritten load commands point at, -of overwrite files already there. dylibbundler walks the
-# graph recursively, which is the part worth not hand-rolling.
+# rewritten load commands point at, -of overwrite files already there, -cd create the
+# destination directory (without it dylibbundler collects the whole graph and only then
+# refuses, because Contents/libs does not exist yet). dylibbundler walks the dependency graph
+# recursively, which is the part worth not hand-rolling.
 echo "--- bundling dependencies ---"
-dylibbundler -b -of \
+dylibbundler -b -of -cd \
   -x "$BINARY" \
   -d "$LIBS_DIR" \
   -p "@executable_path/../libs/"
