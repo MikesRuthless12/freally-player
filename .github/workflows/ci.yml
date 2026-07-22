@@ -95,6 +95,7 @@ jobs:
             xvfb \
             imagemagick \
             x11-utils \
+            openbox \
             libgl1-mesa-dri
 
       - name: Install libmpv (macOS)
@@ -130,6 +131,11 @@ jobs:
           Xvfb :99 -screen 0 1440x900x24 &
           sleep 3
           export DISPLAY=:99
+          # A window manager is load-bearing here: with no WM, nothing maps/focuses the
+          # window, so WebKitGTK never gets the expose that triggers its first paint and the
+          # capture comes back uniform even though the window exists at the right size.
+          openbox &
+          sleep 2
           export WEBKIT_DISABLE_COMPOSITING_MODE=1
           export WEBKIT_DISABLE_DMABUF_RENDERER=1
           export LIBGL_ALWAYS_SOFTWARE=1
@@ -150,8 +156,19 @@ jobs:
           echo "--- app output so far ---"
           cat app.log || true
 
-          import -window root app-ubuntu-latest.png
+          # Capture the app's own window, not the root: the root is mostly empty desktop, and
+          # a dark window on a black root compresses to a near-empty PNG either way.
+          import -window "Freally Player" app-ubuntu-latest.png || import -window root app-ubuntu-latest.png
           kill "$APP_PID" || true
+
+          # A byte-size floor cannot tell "dark theme" from "painted nothing". Count distinct
+          # colours instead: a rendered UI has hundreds, a blank surface has one or two.
+          colours=$(identify -format %k app-ubuntu-latest.png)
+          echo "distinct colours in the capture: $colours"
+          if [ "$colours" -lt 16 ]; then
+            echo "::error::the capture has only $colours distinct colours — the window exists but painted nothing"
+            exit 1
+          fi
 
       - name: Boot and screenshot (macOS)
         if: matrix.os == 'macos-latest'
