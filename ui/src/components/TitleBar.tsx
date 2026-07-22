@@ -72,10 +72,11 @@ export function TitleBar({
       className="relative flex h-9 shrink-0 items-center justify-end border-b border-havoc-border bg-havoc-panel ps-3 select-none"
     >
       {/* Centred independently of the buttons, so it stays centred in the window rather
-          than in whatever space the controls leave over. */}
+          than in whatever space the controls leave over. Padded clear of the controls and
+          truncated, so a long media title never runs under the window buttons. */}
       <span
         data-tauri-drag-region
-        className="pointer-events-none absolute inset-x-0 text-center text-xs font-semibold tracking-wide text-havoc-text"
+        className="pointer-events-none absolute inset-x-0 truncate px-28 text-center text-xs font-semibold tracking-wide text-havoc-text"
       >
         {title}
       </span>

@@ -24,6 +24,26 @@ transport-pause = 一時停止
 transport-back = −10秒
 transport-forward = +10秒
 
+scrubber-label = シーク
+transport-frame-back = 前のフレーム
+transport-frame-forward = 次のフレーム
+transport-mute = ミュート
+transport-unmute = ミュート解除
+transport-volume = 音量
+transport-speed = 再生速度
+transport-chapters = チャプター
+transport-chapter-n = チャプター { $n }
+transport-ab-set-a = リピート開始を設定
+transport-ab-set-b = リピート終了を設定
+transport-ab-clear = リピートを解除
+transport-snapshot = スナップショットを保存
+transport-fullscreen = 全画面表示
+transport-exit-fullscreen = 全画面表示を終了
+
+idle-title = メディアが読み込まれていません
+idle-drop-hint = ここに動画をドロップするか、開いてください。
+idle-continue = 続きを見る
+
 status-idle = 待機中
 status-playing = 再生中
 status-paused = 一時停止中

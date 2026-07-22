@@ -24,6 +24,26 @@ transport-pause = रोकें
 transport-back = −10 सेकंड
 transport-forward = +10 सेकंड
 
+scrubber-label = सीक करें
+transport-frame-back = पिछला फ़्रेम
+transport-frame-forward = अगला फ़्रेम
+transport-mute = म्यूट करें
+transport-unmute = अनम्यूट करें
+transport-volume = ध्वनि
+transport-speed = चलाने की गति
+transport-chapters = अध्याय
+transport-chapter-n = अध्याय { $n }
+transport-ab-set-a = दोहराव आरंभ सेट करें
+transport-ab-set-b = दोहराव अंत सेट करें
+transport-ab-clear = दोहराव हटाएँ
+transport-snapshot = स्नैपशॉट सहेजें
+transport-fullscreen = पूर्ण स्क्रीन
+transport-exit-fullscreen = पूर्ण स्क्रीन से बाहर निकलें
+
+idle-title = कोई मीडिया लोड नहीं है
+idle-drop-hint = यहाँ कोई वीडियो छोड़ें, या एक खोलें।
+idle-continue = देखना जारी रखें
+
 status-idle = निष्क्रिय
 status-playing = चल रहा है
 status-paused = रुका हुआ

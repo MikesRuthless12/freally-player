@@ -39,6 +39,16 @@ pub enum Status {
     Paused,
 }
 
+/// A chapter marker within the open media.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Chapter {
+    /// The chapter's title, when the file names it.
+    pub title: Option<String>,
+    /// Where the chapter starts, in seconds.
+    pub start_secs: f64,
+}
+
 /// What is currently open.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -49,15 +59,77 @@ pub struct MediaInfo {
     pub title: String,
     /// Total duration, once the backend knows it.
     pub duration_secs: Option<f64>,
+    /// Chapter markers, empty until the demuxer has read them (and for files with none).
+    #[serde(default)]
+    pub chapters: Vec<Chapter>,
+}
+
+/// An A–B repeat range. Either end may be unset while the user is still marking it.
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AbLoop {
+    pub a: Option<f64>,
+    pub b: Option<f64>,
 }
 
 /// The transport snapshot the UI mirrors. **No pixels travel this path.**
-#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlaybackState {
     pub status: Status,
     pub position_secs: f64,
     pub media: Option<MediaInfo>,
+    /// Output volume on mpv's 0–100 scale.
+    pub volume: f64,
+    pub muted: bool,
+    /// Playback speed; 1.0 is normal, clamped to [`SPEED_MIN`]..=[`SPEED_MAX`].
+    pub speed: f64,
+    /// How far the media is buffered, in seconds — the scrubber's buffered bar. For a local
+    /// file this reaches the duration quickly; for a stream it trails the download.
+    pub buffered_secs: f64,
+    pub ab_loop: AbLoop,
+}
+
+/// A player that has nothing open sits at these transport defaults — full volume, normal
+/// speed — so the UI never shows a muted-looking 0% or a stalled 0× before a file loads.
+impl Default for PlaybackState {
+    fn default() -> Self {
+        Self {
+            status: Status::Idle,
+            position_secs: 0.0,
+            media: None,
+            volume: 100.0,
+            muted: false,
+            speed: 1.0,
+            buffered_secs: 0.0,
+            ab_loop: AbLoop::default(),
+        }
+    }
+}
+
+/// The playback-speed range the transport exposes (0.25×–4.0×), clamped in the engine so a
+/// bad value from the UI can never reach the backend.
+pub const SPEED_MIN: f64 = 0.25;
+pub const SPEED_MAX: f64 = 4.0;
+
+/// Clamp a requested playback speed into the supported range, treating a non-finite request
+/// as "normal speed" rather than letting it reach the backend.
+pub fn clamp_speed(speed: f64) -> f64 {
+    if speed.is_finite() {
+        speed.clamp(SPEED_MIN, SPEED_MAX)
+    } else {
+        1.0
+    }
+}
+
+/// Clamp a requested volume onto mpv's 0–100 scale, treating a non-finite request as full
+/// volume rather than passing it through.
+pub fn clamp_volume(volume: f64) -> f64 {
+    if volume.is_finite() {
+        volume.clamp(0.0, 100.0)
+    } else {
+        100.0
+    }
 }
 
 /// Why an engine operation failed. Every variant is reported to the user verbatim — the
@@ -101,17 +173,75 @@ pub enum HostWindow {
     Win32(isize),
 }
 
+/// How to open a file: where to start it and which tracks to select. Threaded into the
+/// backend's open call so resume-from-position and last-used tracks are applied *atomically*
+/// with the load, rather than as a seek afterward that could race the file becoming ready.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct OpenOptions {
+    /// Start position in seconds — the resume point, or `None` to start at the beginning.
+    pub start_secs: Option<f64>,
+    /// Audio track to select (mpv `aid`), or `None` to let the backend choose.
+    pub audio_id: Option<i64>,
+    /// Subtitle track to select (mpv `sid`).
+    pub sub_id: Option<i64>,
+}
+
 /// A decode/render backend. Implementors drive a native GPU surface; the orchestration above
 /// them only ever moves transport state.
 pub trait Engine: Send {
-    /// Open `path` (a local file or a URL) and describe what was opened.
-    fn open(&mut self, path: &str) -> Result<MediaInfo, EngineError>;
+    /// Open `path` (a local file or a URL) and describe what was opened, applying `options`
+    /// (resume position + track selection) as part of the load.
+    fn open(&mut self, path: &str, options: &OpenOptions) -> Result<MediaInfo, EngineError>;
     fn play(&mut self) -> Result<(), EngineError>;
     fn pause(&mut self) -> Result<(), EngineError>;
     /// Seek to an absolute position in seconds.
     fn seek(&mut self, position_secs: f64) -> Result<(), EngineError>;
     /// The current transport snapshot.
     fn state(&self) -> PlaybackState;
+
+    // --- Transport extras (Phase 1). Each has a default that refuses with `NothingOpen`, so
+    // an engine that decodes nothing (the null engine) inherits an honest refusal and a real
+    // backend overrides with actual behaviour. The UI only reaches these once media is open,
+    // which the null engine never allows. ---
+
+    /// Set output volume on mpv's 0–100 scale.
+    fn set_volume(&mut self, volume: f64) -> Result<(), EngineError> {
+        let _ = volume;
+        Err(EngineError::NothingOpen)
+    }
+    fn set_muted(&mut self, muted: bool) -> Result<(), EngineError> {
+        let _ = muted;
+        Err(EngineError::NothingOpen)
+    }
+    /// Set playback speed; the caller clamps to [`SPEED_MIN`]..=[`SPEED_MAX`].
+    fn set_speed(&mut self, speed: f64) -> Result<(), EngineError> {
+        let _ = speed;
+        Err(EngineError::NothingOpen)
+    }
+    /// Step one frame forward (`forward`) or back, pausing as it does.
+    fn frame_step(&mut self, forward: bool) -> Result<(), EngineError> {
+        let _ = forward;
+        Err(EngineError::NothingOpen)
+    }
+    /// Set or clear the A–B repeat range. `None` for an end clears it.
+    fn set_ab_loop(&mut self, a: Option<f64>, b: Option<f64>) -> Result<(), EngineError> {
+        let _ = (a, b);
+        Err(EngineError::NothingOpen)
+    }
+    /// Jump to the chapter at `index`.
+    fn set_chapter(&mut self, index: usize) -> Result<(), EngineError> {
+        let _ = index;
+        Err(EngineError::NothingOpen)
+    }
+    /// The currently selected `(audio_id, sub_id)`, for persisting last-used tracks.
+    fn current_tracks(&self) -> (Option<i64>, Option<i64>) {
+        (None, None)
+    }
+    /// Write the current frame to `path`. `with_subs` includes the subtitle overlay.
+    fn capture_frame(&mut self, path: &str, with_subs: bool) -> Result<(), EngineError> {
+        let _ = (path, with_subs);
+        Err(EngineError::NothingOpen)
+    }
 
     /// Create the native video surface inside `host`, sized in physical pixels.
     ///
@@ -163,7 +293,7 @@ impl NullEngine {
 }
 
 impl Engine for NullEngine {
-    fn open(&mut self, _path: &str) -> Result<MediaInfo, EngineError> {
+    fn open(&mut self, _path: &str, _options: &OpenOptions) -> Result<MediaInfo, EngineError> {
         Err(self.refusal())
     }
 
@@ -215,7 +345,10 @@ mod tests {
     #[test]
     fn the_null_engine_refuses_honestly_instead_of_pretending() {
         let mut engine = NullEngine::default();
-        assert_eq!(engine.open("clip.mkv"), Err(EngineError::NoBackend));
+        assert_eq!(
+            engine.open("clip.mkv", &OpenOptions::default()),
+            Err(EngineError::NoBackend)
+        );
         assert_eq!(engine.play(), Err(EngineError::NoBackend));
         assert_eq!(engine.pause(), Err(EngineError::NoBackend));
         assert_eq!(engine.seek(1.0), Err(EngineError::NoBackend));
@@ -227,7 +360,7 @@ mod tests {
     fn an_unavailable_backend_reports_its_real_reason() {
         let mut engine = NullEngine::unavailable("libmpv: no audio device");
         assert_eq!(
-            engine.open("clip.mkv"),
+            engine.open("clip.mkv", &OpenOptions::default()),
             Err(EngineError::Backend("libmpv: no audio device".to_owned()))
         );
         assert!(engine
@@ -267,5 +400,28 @@ mod tests {
         assert_eq!(json["status"], "idle");
         assert_eq!(json["positionSecs"], 0.0);
         assert!(json["media"].is_null());
+        // Full volume and normal speed at rest, so the UI never renders a muted 0% or 0×.
+        assert_eq!(json["volume"], 100.0);
+        assert_eq!(json["muted"], false);
+        assert_eq!(json["speed"], 1.0);
+        assert!(json["abLoop"]["a"].is_null());
+    }
+
+    #[test]
+    fn speed_is_clamped_to_the_supported_range() {
+        assert_eq!(clamp_speed(1.0), 1.0);
+        assert_eq!(clamp_speed(0.1), SPEED_MIN);
+        assert_eq!(clamp_speed(9.0), SPEED_MAX);
+        // A non-finite request must never reach the backend.
+        assert_eq!(clamp_speed(f64::NAN), 1.0);
+        assert_eq!(clamp_speed(f64::INFINITY), 1.0);
+    }
+
+    #[test]
+    fn volume_is_clamped_onto_the_zero_hundred_scale() {
+        assert_eq!(clamp_volume(50.0), 50.0);
+        assert_eq!(clamp_volume(-5.0), 0.0);
+        assert_eq!(clamp_volume(250.0), 100.0);
+        assert_eq!(clamp_volume(f64::NAN), 100.0);
     }
 }

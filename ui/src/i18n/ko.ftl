@@ -24,6 +24,26 @@ transport-pause = 일시정지
 transport-back = −10초
 transport-forward = +10초
 
+scrubber-label = 탐색
+transport-frame-back = 이전 프레임
+transport-frame-forward = 다음 프레임
+transport-mute = 음소거
+transport-unmute = 음소거 해제
+transport-volume = 볼륨
+transport-speed = 재생 속도
+transport-chapters = 챕터
+transport-chapter-n = 챕터 { $n }
+transport-ab-set-a = 반복 시작 지정
+transport-ab-set-b = 반복 끝 지정
+transport-ab-clear = 반복 지우기
+transport-snapshot = 스냅숏 저장
+transport-fullscreen = 전체 화면
+transport-exit-fullscreen = 전체 화면 종료
+
+idle-title = 불러온 미디어가 없습니다
+idle-drop-hint = 여기에 동영상을 놓거나 하나를 여세요.
+idle-continue = 이어서 보기
+
 status-idle = 대기 중
 status-playing = 재생 중
 status-paused = 일시정지됨

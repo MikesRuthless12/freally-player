@@ -22,14 +22,39 @@ const windowApi = vi.hoisted(() => ({
 vi.mock("@tauri-apps/api/window", () => ({ getCurrentWindow: () => windowApi }));
 
 const pickFile = vi.hoisted(() => vi.fn());
-vi.mock("@tauri-apps/plugin-dialog", () => ({ open: pickFile }));
+const saveFile = vi.hoisted(() => vi.fn());
+vi.mock("@tauri-apps/plugin-dialog", () => ({ open: pickFile, save: saveFile }));
+
+// The player subscribes to webview drag-drop; give it an inert handle in the unit environment.
+vi.mock("@tauri-apps/api/webview", () => ({
+  getCurrentWebview: () => ({ onDragDropEvent: () => Promise.resolve(() => {}) }),
+}));
 
 /** Captures `listen(event, handler)` so tests can push events the way Rust would. */
 const listeners = vi.hoisted(() => new Map<string, (event: { payload: unknown }) => void>());
 const listen = vi.hoisted(() => vi.fn());
 vi.mock("@tauri-apps/api/event", () => ({ listen }));
 
-const IDLE: PlaybackState = { status: "idle", positionSecs: 0, media: null };
+const IDLE: PlaybackState = {
+  status: "idle",
+  positionSecs: 0,
+  media: null,
+  volume: 100,
+  muted: false,
+  speed: 1,
+  bufferedSecs: 0,
+  abLoop: { a: null, b: null },
+};
+
+/** A playing snapshot for `title`, resuming the shared idle defaults. */
+function playing(title: string, positionSecs: number, durationSecs: number | null): PlaybackState {
+  return {
+    ...IDLE,
+    status: "playing",
+    positionSecs,
+    media: { path: `C:/v/${title}.mkv`, title, durationSecs, chapters: [] },
+  };
+}
 
 /** Canned backend: every command answers, EULA accepted and no pending crash by default. */
 function backend(overrides: Record<string, unknown> = {}) {
@@ -43,7 +68,9 @@ function backend(overrides: Record<string, unknown> = {}) {
     play: undefined,
     pause: undefined,
     seek: undefined,
+    toggle_play: undefined,
     set_video_rect: undefined,
+    recent_watch: [],
     bug_report_context: {
       appVersion: "0.1.0",
       os: "windows",
@@ -187,14 +214,13 @@ describe("App", () => {
       render(<App />);
       await screen.findByText("No media loaded");
 
-      await emit("player://state", {
-        status: "playing",
-        positionSecs: 75,
-        media: { path: "C:/v/Arrival.mkv", title: "Arrival", durationSecs: 7200 },
-      } satisfies PlaybackState);
+      await emit("player://state", playing("Arrival", 75, 7200));
 
-      expect(await screen.findByText(transportLine("Arrival"))).toBeInTheDocument();
-      expect(screen.getByText(transportLine("playing · 1:15 / 2:00:00"))).toBeInTheDocument();
+      // The open media's title takes over the title bar, and the control bar reflects the
+      // playing status by offering Pause and the live clock.
+      expect(await screen.findByText("Arrival")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
+      expect(screen.getByText(transportLine("1:15 / 2:00:00"))).toBeInTheDocument();
     });
 
     it("sends the picked path through open_media rather than reading the file itself", async () => {
@@ -239,12 +265,8 @@ describe("App", () => {
       render(<App />);
       await screen.findByText("No media loaded");
 
-      await emit("player://state", {
-        status: "playing",
-        positionSecs: 40,
-        media: { path: "C:/v/clip.mkv", title: "clip", durationSecs: null },
-      } satisfies PlaybackState);
-      await screen.findByText(transportLine("clip"));
+      await emit("player://state", playing("clip", 40, null));
+      await screen.findByRole("button", { name: "Pause" });
 
       await userEvent.click(screen.getByRole("button", { name: "+10s" }));
       expect(invoke).toHaveBeenCalledWith("seek", { positionSecs: 50 });
@@ -357,16 +379,18 @@ describe("App", () => {
       expect(invoke).toHaveBeenCalledWith("settings_set", {
         settings: { theme: "dark", minimizeToTray: false, language: "ja" },
       });
-      // Actually in Japanese, in the same session — no reload, no restart.
-      expect(await screen.findByRole("button", { name: "再生" })).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Play" })).not.toBeInTheDocument();
+      // Actually in Japanese, in the same session — no reload, no restart. The idle screen's
+      // Open button behind the modal switches with the rest of the shell.
+      expect(await screen.findByRole("button", { name: "メディアを開く…" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Open media…" })).not.toBeInTheDocument();
     });
 
     it("starts in the stored language", async () => {
       backend({ settings_get: { theme: "dark", minimizeToTray: false, language: "fr" } });
       render(<App />);
 
-      expect(await screen.findByRole("button", { name: "Lecture" })).toBeInTheDocument();
+      // The idle screen's Open button renders in the stored language from the first paint.
+      expect(await screen.findByRole("button", { name: "Ouvrir un média…" })).toBeInTheDocument();
       await waitFor(() => expect(document.documentElement.lang).toBe("fr"));
     });
 

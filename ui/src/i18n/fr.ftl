@@ -24,6 +24,26 @@ transport-pause = Pause
 transport-back = −10 s
 transport-forward = +10 s
 
+scrubber-label = Position de lecture
+transport-frame-back = Image précédente
+transport-frame-forward = Image suivante
+transport-mute = Couper le son
+transport-unmute = Rétablir le son
+transport-volume = Volume
+transport-speed = Vitesse de lecture
+transport-chapters = Chapitres
+transport-chapter-n = Chapitre { $n }
+transport-ab-set-a = Définir le début de la boucle
+transport-ab-set-b = Définir la fin de la boucle
+transport-ab-clear = Effacer la boucle
+transport-snapshot = Enregistrer une capture
+transport-fullscreen = Plein écran
+transport-exit-fullscreen = Quitter le plein écran
+
+idle-title = Aucun média chargé
+idle-drop-hint = Déposez une vidéo ici ou ouvrez-en une.
+idle-continue = Reprendre la lecture
+
 status-idle = inactif
 status-playing = en lecture
 status-paused = en pause

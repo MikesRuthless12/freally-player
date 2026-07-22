@@ -41,6 +41,13 @@ take an action that needs it — specifically:
 - **Update checks** — the only contact with a Havoc Software endpoint, and it is
   minimal.
 
+**Operating-system media panel (not network).** When something is playing, Freally
+Player tells your OS's own now-playing panel (Windows System Media Transport
+Controls, macOS Now Playing, Linux MPRIS) the media's **title and play state**, so
+the hardware media keys and that panel work. This is a **local** integration with
+your own operating system — nothing is sent over the network — and it carries only
+the title and whether playback is running, never your file path or contents.
+
 These actions are initiated **by you**. Online subtitle and metadata lookups send
 only the minimal identifier needed (e.g. a title, filename, or content hash used
 for matching) — **never your file contents, full library, or full file paths**.

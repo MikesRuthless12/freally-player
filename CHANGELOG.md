@@ -16,7 +16,35 @@ release).
 
 ## [Unreleased]
 
-### Added
+### Added — Phase 1: core playback UI (→ 0.20.0)
+- **A glassy control bar under the picture** — play/pause, frame-step, ±10s skip, a live clock,
+  volume with a mute toggle, a playback-speed menu (0.25×–4.0×), A–B repeat, a chapters menu, a
+  snapshot button, and fullscreen. It **auto-hides during playback** so the picture fills the
+  window, and reappears on the first mouse move. It sits in its own strip *below* the frame rather
+  than floating over it: on Windows the native video surface composites *above* the webview, so
+  the web layer can only paint chrome where the picture does not — measured, not assumed
+  ([`crates/player/src/surface/windows.rs`](crates/player/src/surface/windows.rs)).
+- **A scrubber** with click/drag seek, a buffered-range bar, chapter tick marks, the A–B loop
+  region shaded in, and a **timecode that follows the cursor** on hover. Pinned left-to-right in
+  every locale, because a timeline is a temporal axis — mirroring it in Arabic would put 0:00 on
+  the right and invert every drag.
+- **Resume-from-position + last-used tracks.** A file reopens where it was left, with the audio
+  and subtitle tracks that were playing — saved on open, close, and periodically while playing.
+  A file that has **changed under its path** (size or modification time) ignores its stale point
+  rather than dropping you into the wrong place; a file watched to the end forgets its point.
+  Stored in [`crates/library`](crates/library) as a JSON map next to the settings file.
+- **A keyboard-first shortcut layer** — Space/K play-pause, ←/→ and J/L seek, ↑/↓ volume, M mute,
+  F fullscreen, `,`/`.` frame-step, `[`/`]` speed, 0–9 jump to a percentage. Inert while a text
+  field, a menu, or a modal has the keyboard.
+- **OS media keys + a now-playing panel** via `souvlaki` (Windows SMTC, macOS MediaRemote, Linux
+  MPRIS): the media keys drive the same engine, and the panel shows the current title and play
+  state.
+- **Snapshot export** — save the current frame (with the subtitle overlay) to a PNG through a
+  native save dialog.
+- **An idle screen** — a drop zone (drop a file anywhere to open it), an Open button, and a
+  **Continue-Watching row** of the files you last left partway through, each with a progress bar.
+
+### Added — done earlier, still unreleased
 - **The UI is translated into all 18 shipped languages** (`ar de en es fr hi id it ja ko nl pl
   pt-BR ru tr uk vi zh-CN`), with a **Language pane in Settings** that switches instantly — no
   restart, no reload, no request. Every user-visible string now goes through a Fluent catalog in
