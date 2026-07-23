@@ -24,6 +24,26 @@ transport-pause = Pauzeren
 transport-back = −10 s
 transport-forward = +10 s
 
+scrubber-label = Zoeken
+transport-frame-back = Vorig beeld
+transport-frame-forward = Volgend beeld
+transport-mute = Dempen
+transport-unmute = Dempen opheffen
+transport-volume = Volume
+transport-speed = Afspeelsnelheid
+transport-chapters = Hoofdstukken
+transport-chapter-n = Hoofdstuk { $n }
+transport-ab-set-a = Herhaalbegin instellen
+transport-ab-set-b = Herhaaleinde instellen
+transport-ab-clear = Herhaling wissen
+transport-snapshot = Momentopname opslaan
+transport-fullscreen = Volledig scherm
+transport-exit-fullscreen = Volledig scherm afsluiten
+
+idle-title = Geen media geladen
+idle-drop-hint = Sleep hier een video, of open er een.
+idle-continue = Verder kijken
+
 status-idle = inactief
 status-playing = speelt af
 status-paused = gepauzeerd

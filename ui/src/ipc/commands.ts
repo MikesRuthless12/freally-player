@@ -11,6 +11,7 @@ import type {
   EulaStatus,
   MediaInfo,
   PlaybackState,
+  RecentWatch,
   UserSettings,
 } from "./types";
 
@@ -47,9 +48,37 @@ export const play = (): Promise<void> => invoke<void>("play");
 
 export const pause = (): Promise<void> => invoke<void>("pause");
 
+/** Toggle play/pause — what Space and the OS play/pause key do. */
+export const togglePlay = (): Promise<void> => invoke<void>("toggle_play");
+
 export const seek = (positionSecs: number): Promise<void> => invoke<void>("seek", { positionSecs });
 
 export const getState = (): Promise<PlaybackState> => invoke<PlaybackState>("get_state");
+
+export const setVolume = (volume: number): Promise<void> => invoke<void>("set_volume", { volume });
+
+export const setMuted = (muted: boolean): Promise<void> => invoke<void>("set_muted", { muted });
+
+export const setSpeed = (speed: number): Promise<void> => invoke<void>("set_speed", { speed });
+
+/** Step one frame forward (`true`) or back; mpv pauses as it does. */
+export const frameStep = (forward: boolean): Promise<void> =>
+  invoke<void>("frame_step", { forward });
+
+/** Set or clear the A–B repeat range; `null` for an end clears it. */
+export const setAbLoop = (a: number | null, b: number | null): Promise<void> =>
+  invoke<void>("set_ab_loop", { a, b });
+
+/** Jump to a chapter by its index in the open media's chapter list. */
+export const setChapter = (index: number): Promise<void> => invoke<void>("set_chapter", { index });
+
+/** Write the current frame to `path`; `withSubs` bakes in the subtitle overlay. */
+export const captureFrame = (path: string, withSubs: boolean): Promise<void> =>
+  invoke<void>("capture_frame", { path, withSubs });
+
+/** The recently-watched items for the idle screen's Continue-Watching row, newest first. */
+export const recentWatch = (limit: number): Promise<RecentWatch[]> =>
+  invoke<RecentWatch[]>("recent_watch", { limit });
 
 /**
  * Report where the video stage is, in physical pixels relative to the window's client area.

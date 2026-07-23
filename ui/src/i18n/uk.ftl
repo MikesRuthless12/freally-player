@@ -24,6 +24,26 @@ transport-pause = Пауза
 transport-back = −10 с
 transport-forward = +10 с
 
+scrubber-label = Перемотування
+transport-frame-back = Попередній кадр
+transport-frame-forward = Наступний кадр
+transport-mute = Вимкнути звук
+transport-unmute = Увімкнути звук
+transport-volume = Гучність
+transport-speed = Швидкість відтворення
+transport-chapters = Розділи
+transport-chapter-n = Розділ { $n }
+transport-ab-set-a = Задати початок повтору
+transport-ab-set-b = Задати кінець повтору
+transport-ab-clear = Очистити повтор
+transport-snapshot = Зберегти знімок
+transport-fullscreen = Повний екран
+transport-exit-fullscreen = Вийти з повного екрана
+
+idle-title = Нічого не завантажено
+idle-drop-hint = Перетягніть сюди відео або відкрийте файл.
+idle-continue = Продовжити перегляд
+
 status-idle = очікування
 status-playing = відтворення
 status-paused = призупинено

@@ -46,11 +46,26 @@ export type BugReportTarget = "github" | "gmail" | "email";
 /** Transport status (`freally_player_core::Status`). */
 export type PlaybackStatus = "idle" | "playing" | "paused";
 
+/** A chapter marker within the open media (`freally_player_core::Chapter`). */
+export interface Chapter {
+  /** The chapter's title, or `null` when the file does not name it. */
+  title: string | null;
+  startSecs: number;
+}
+
 /** What is currently open (`freally_player_core::MediaInfo`). */
 export interface MediaInfo {
   path: string;
   title: string;
   durationSecs: number | null;
+  /** Chapter markers, empty until the demuxer has read them (and for media with none). */
+  chapters: Chapter[];
+}
+
+/** An A–B repeat range (`freally_player_core::AbLoop`). Either end may be unset. */
+export interface AbLoop {
+  a: number | null;
+  b: number | null;
 }
 
 /**
@@ -63,4 +78,23 @@ export interface PlaybackState {
   status: PlaybackStatus;
   positionSecs: number;
   media: MediaInfo | null;
+  /** Output volume on mpv's 0–100 scale. */
+  volume: number;
+  muted: boolean;
+  /** Playback speed; 1.0 is normal. */
+  speed: number;
+  /** How far the media is buffered, in seconds — the scrubber's buffered bar. */
+  bufferedSecs: number;
+  abLoop: AbLoop;
+}
+
+/** The supported playback-speed range (mirrors `freally_player_core::SPEED_MIN`/`MAX`). */
+export const SPEED_MIN = 0.25;
+export const SPEED_MAX = 4.0;
+
+/** A recently-watched item for the idle screen's Continue-Watching row (`freally_library::RecentWatch`). */
+export interface RecentWatch {
+  path: string;
+  positionSecs: number;
+  durationSecs: number | null;
 }

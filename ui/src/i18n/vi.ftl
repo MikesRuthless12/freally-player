@@ -24,6 +24,26 @@ transport-pause = Tạm dừng
 transport-back = −10 giây
 transport-forward = +10 giây
 
+scrubber-label = Tua
+transport-frame-back = Khung hình trước
+transport-frame-forward = Khung hình sau
+transport-mute = Tắt tiếng
+transport-unmute = Bật tiếng
+transport-volume = Âm lượng
+transport-speed = Tốc độ phát
+transport-chapters = Chương
+transport-chapter-n = Chương { $n }
+transport-ab-set-a = Đặt điểm bắt đầu lặp
+transport-ab-set-b = Đặt điểm kết thúc lặp
+transport-ab-clear = Xóa lặp
+transport-snapshot = Lưu ảnh chụp
+transport-fullscreen = Toàn màn hình
+transport-exit-fullscreen = Thoát toàn màn hình
+
+idle-title = Chưa nạp phương tiện nào
+idle-drop-hint = Thả video vào đây, hoặc mở một tệp.
+idle-continue = Xem tiếp
+
 status-idle = nhàn rỗi
 status-playing = đang phát
 status-paused = đã tạm dừng

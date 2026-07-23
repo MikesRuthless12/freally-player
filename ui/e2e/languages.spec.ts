@@ -67,8 +67,11 @@ async function expectSignBeforeDigits(page: Page) {
 
 async function boot(page: Page) {
   await page.addInitScript({ path: "e2e/tauri-mock.js" });
-  await page.goto("/");
-  await page.getByRole("button", { name: "Open media…" }).waitFor({ timeout: 15_000 });
+  // Open a file, paused: the transport controls behind the modal (Play/pause, the seek
+  // buttons) are what prove the shell re-rendered into each language, and a paused file keeps
+  // them up rather than auto-hiding, with the toggle reading Play.
+  await page.goto("/?media=1&paused=1");
+  await page.getByRole("button", { name: "Play", exact: true }).waitFor({ timeout: 15_000 });
 }
 
 test.describe("every shipped language switches live from the Settings modal", () => {

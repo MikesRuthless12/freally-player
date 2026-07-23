@@ -24,6 +24,26 @@ transport-pause = Duraklat
 transport-back = −10 sn
 transport-forward = +10 sn
 
+scrubber-label = Sar
+transport-frame-back = Önceki kare
+transport-frame-forward = Sonraki kare
+transport-mute = Sesi kapat
+transport-unmute = Sesi aç
+transport-volume = Ses düzeyi
+transport-speed = Oynatma hızı
+transport-chapters = Bölümler
+transport-chapter-n = Bölüm { $n }
+transport-ab-set-a = Yineleme başlangıcını ayarla
+transport-ab-set-b = Yineleme sonunu ayarla
+transport-ab-clear = Yinelemeyi temizle
+transport-snapshot = Anlık görüntü kaydet
+transport-fullscreen = Tam ekran
+transport-exit-fullscreen = Tam ekrandan çık
+
+idle-title = Yüklenmiş medya yok
+idle-drop-hint = Buraya bir video bırakın veya bir tane açın.
+idle-continue = İzlemeye devam et
+
 status-idle = boşta
 status-playing = oynatılıyor
 status-paused = duraklatıldı

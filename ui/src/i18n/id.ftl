@@ -24,6 +24,26 @@ transport-pause = Jeda
 transport-back = −10 d
 transport-forward = +10 d
 
+scrubber-label = Cari
+transport-frame-back = Bingkai sebelumnya
+transport-frame-forward = Bingkai berikutnya
+transport-mute = Bisukan
+transport-unmute = Nyalakan suara
+transport-volume = Volume
+transport-speed = Kecepatan pemutaran
+transport-chapters = Bab
+transport-chapter-n = Bab { $n }
+transport-ab-set-a = Setel awal pengulangan
+transport-ab-set-b = Setel akhir pengulangan
+transport-ab-clear = Hapus pengulangan
+transport-snapshot = Simpan cuplikan
+transport-fullscreen = Layar penuh
+transport-exit-fullscreen = Keluar dari layar penuh
+
+idle-title = Tidak ada media yang dimuat
+idle-drop-hint = Jatuhkan video di sini, atau buka satu.
+idle-continue = Lanjutkan menonton
+
 status-idle = diam
 status-playing = memutar
 status-paused = dijeda

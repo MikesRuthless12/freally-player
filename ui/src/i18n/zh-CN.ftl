@@ -24,6 +24,26 @@ transport-pause = 暂停
 transport-back = −10秒
 transport-forward = +10秒
 
+scrubber-label = 定位
+transport-frame-back = 上一帧
+transport-frame-forward = 下一帧
+transport-mute = 静音
+transport-unmute = 取消静音
+transport-volume = 音量
+transport-speed = 播放速度
+transport-chapters = 章节
+transport-chapter-n = 第 { $n } 章
+transport-ab-set-a = 设置重复起点
+transport-ab-set-b = 设置重复终点
+transport-ab-clear = 清除重复
+transport-snapshot = 保存快照
+transport-fullscreen = 全屏
+transport-exit-fullscreen = 退出全屏
+
+idle-title = 未载入媒体
+idle-drop-hint = 将视频拖到此处，或打开一个。
+idle-continue = 继续观看
+
 status-idle = 空闲
 status-playing = 播放中
 status-paused = 已暂停

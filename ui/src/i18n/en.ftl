@@ -40,6 +40,29 @@ transport-pause = Pause
 transport-back = −10s
 transport-forward = +10s
 
+# The control bar under the picture.
+scrubber-label = Seek
+transport-frame-back = Previous frame
+transport-frame-forward = Next frame
+transport-mute = Mute
+transport-unmute = Unmute
+transport-volume = Volume
+transport-speed = Playback speed
+transport-chapters = Chapters
+# A chapter with no title of its own, shown by number.
+transport-chapter-n = Chapter { $n }
+transport-ab-set-a = Set repeat start
+transport-ab-set-b = Set repeat end
+transport-ab-clear = Clear repeat
+transport-snapshot = Save a snapshot
+transport-fullscreen = Fullscreen
+transport-exit-fullscreen = Exit fullscreen
+
+# The idle screen shown when nothing is open.
+idle-title = No media loaded
+idle-drop-hint = Drop a video here, or open one.
+idle-continue = Continue watching
+
 # Transport status, shown beside the open media's title.
 status-idle = idle
 status-playing = playing

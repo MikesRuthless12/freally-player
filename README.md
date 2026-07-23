@@ -9,14 +9,17 @@ home.
 
 > **Plays anything. Beautifully. No ads, no spyware.**
 
-> **Status: in development — Phase 0 (foundation) building toward `0.10.0`. No releases yet.**
-> The app builds and runs: libmpv decodes into a native GPU surface, driven through its render
-> API and composited with the React UI, so decoded video never crosses the IPC boundary. Video
-> output currently works on **Windows**; the macOS and Linux surface hosts are not implemented
-> yet and say so plainly in-app rather than showing a black screen. The detailed planning +
-> design set (product vision, PRD, roadmap, build-prompts guide, competition guide, and
-> go-to-market plan) is **maintained privately** and is not published here.
-> **Downloads will be available in future releases.**
+> **Status: in development — Phase 1 (core playback UI) complete, building toward `0.20.0`. No
+> releases published yet.** The app builds and runs: libmpv decodes into a native GPU surface,
+> driven through its render API and composited with the React UI, so decoded video never crosses
+> the IPC boundary. On top of it sits the full transport — a glassy auto-hiding control bar,
+> scrubber (seek, chapter ticks, buffered range, hover timecode), speed, A–B repeat, frame-step,
+> snapshots, keyboard shortcuts, OS media keys, and resume-from-position. Video output currently
+> works on **Windows**; the macOS and Linux surface hosts are not implemented yet and say so
+> plainly in-app rather than showing a black screen. The detailed planning + design set (product
+> vision, PRD, roadmap, build-prompts guide, competition guide, and go-to-market plan) is
+> **maintained privately** and is not published here. **Downloads will be available in future
+> releases.**
 
 > **🔒 Local-first, private by design — and no ads, ever.** All playback, the media library, and
 > editing run **100% offline** and **on your machine**. There is **no telemetry, no analytics, and no

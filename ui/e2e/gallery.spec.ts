@@ -39,9 +39,9 @@ async function lastArgs(page: Page, cmd: string): Promise<Record<string, unknown
   }, cmd);
 }
 
-/** The player chrome is up once the transport is rendered. */
+/** The player chrome is up once the stage is rendered — present whether idle or playing. */
 async function playerReady(page: Page) {
-  await page.getByRole("button", { name: "Open media…" }).waitFor({ timeout: 15_000 });
+  await page.getByLabel("Video stage").waitFor({ timeout: 15_000 });
   await page.waitForTimeout(300);
 }
 
@@ -75,7 +75,7 @@ test("02 — player shell, nothing loaded", async ({ page }) => {
 
   await expect(page.getByText("No media loaded")).toBeVisible();
   await expect(page.getByLabel("Video stage")).toBeVisible();
-  await expect(page.getByText("v0.10.0")).toBeVisible();
+  await expect(page.getByText("v0.20.0")).toBeVisible();
 
   await page.screenshot({ path: `${DIR}/02-player-idle.png` });
 });
@@ -84,12 +84,14 @@ test("03 — transport with media open", async ({ page }) => {
   await boot(page, "?media=1");
   await playerReady(page);
 
-  // The stage stays clear: the picture is drawn by the native surface, not the web layer.
-  await expect(page.getByText(/Big Buck Bunny/)).toBeVisible();
-  await expect(page.getByText(/playing/)).toBeVisible();
-  for (const control of ["Play", "Pause", "−10s", "+10s"]) {
+  // The open media's title takes over the title bar; the stage itself stays clear for the
+  // native surface. A playing file offers Pause (the play/pause toggle), the skip buttons and
+  // the live clock.
+  await expect(page.getByText("Big Buck Bunny", { exact: true }).first()).toBeVisible();
+  for (const control of ["Pause", "−10s", "+10s"]) {
     await expect(page.getByRole("button", { name: control })).toBeVisible();
   }
+  await expect(page.getByText("2:17 / 9:56")).toBeVisible();
 
   await page.screenshot({ path: `${DIR}/03-transport-playing.png` });
 });
@@ -173,11 +175,9 @@ test("11 — transport controls drive the backend", async ({ page }) => {
   await boot(page, "?media=1");
   await playerReady(page);
 
+  // Play/pause is one toggle button; on a playing file it reads Pause and sends toggle_play.
   await page.getByRole("button", { name: "Pause" }).click();
-  await expect.poll(() => invoked(page)).toContain("pause");
-
-  await page.getByRole("button", { name: "Play" }).click();
-  await expect.poll(() => invoked(page)).toContain("play");
+  await expect.poll(() => invoked(page)).toContain("toggle_play");
 
   // Seeking is relative to the position the UI last mirrored (137s from the mock).
   await page.getByRole("button", { name: "+10s" }).click();
@@ -186,6 +186,76 @@ test("11 — transport controls drive the backend", async ({ page }) => {
 
   await page.getByRole("button", { name: "−10s" }).click();
   expect(await lastArgs(page, "seek")).toEqual({ positionSecs: 127 });
+});
+
+test("11b — the control bar drives volume, speed, frame-step, A–B and snapshot", async ({
+  page,
+}) => {
+  await boot(page, "?media=1");
+  await playerReady(page);
+
+  // Mute.
+  await page.getByRole("button", { name: "Mute" }).click();
+  await expect.poll(() => invoked(page)).toContain("set_muted");
+  expect(await lastArgs(page, "set_muted")).toEqual({ muted: true });
+
+  // Frame step (back and forward).
+  await page.getByRole("button", { name: "Previous frame" }).click();
+  expect(await lastArgs(page, "frame_step")).toEqual({ forward: false });
+  await page.getByRole("button", { name: "Next frame" }).click();
+  expect(await lastArgs(page, "frame_step")).toEqual({ forward: true });
+
+  // A–B repeat: the first click marks the start at the mirrored position (137s).
+  await page.getByRole("button", { name: "Set repeat start" }).click();
+  await expect.poll(() => invoked(page)).toContain("set_ab_loop");
+  expect(await lastArgs(page, "set_ab_loop")).toEqual({ a: 137, b: null });
+
+  // Speed menu → 2×.
+  await page.getByRole("button", { name: "Playback speed" }).click();
+  await page.getByRole("menuitem", { name: "2×" }).click();
+  expect(await lastArgs(page, "set_speed")).toEqual({ speed: 2 });
+
+  // Snapshot opens the native save dialog and captures with subtitles baked in.
+  await page.getByRole("button", { name: "Save a snapshot" }).click();
+  await expect.poll(() => invoked(page)).toContain("capture_frame");
+  expect(await lastArgs(page, "capture_frame")).toEqual({
+    path: "C:/Videos/snapshot.png",
+    withSubs: true,
+  });
+
+  await page.screenshot({ path: `${DIR}/11b-control-bar.png` });
+});
+
+test("11c — the chapters menu jumps to a chapter", async ({ page }) => {
+  await boot(page, "?media=1");
+  await playerReady(page);
+
+  await page.getByRole("button", { name: "Chapters" }).click();
+  const menu = page.getByRole("menu", { name: "Chapters" });
+  await expect(menu).toBeVisible();
+  // The mock's three chapters are listed with their titles.
+  await expect(menu.getByText("The meadow")).toBeVisible();
+  await page.screenshot({ path: `${DIR}/11d-chapters-menu.png` });
+
+  await menu.getByRole("menuitem", { name: /The meadow/ }).click();
+  await expect.poll(() => invoked(page)).toContain("set_chapter");
+  expect(await lastArgs(page, "set_chapter")).toEqual({ index: 1 });
+});
+
+test("11e — the scrubber seeks to a clicked position", async ({ page }) => {
+  await boot(page, "?media=1");
+  await playerReady(page);
+
+  const scrubber = page.getByRole("slider", { name: "Seek" });
+  const box = await scrubber.boundingBox();
+  expect(box).not.toBeNull();
+  // Click at the mid-point of the track → roughly half of the 596s duration.
+  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+
+  await expect.poll(() => invoked(page)).toContain("seek");
+  const secs = Number((await lastArgs(page, "seek"))?.positionSecs);
+  expect(secs).toBeGreaterThan(250);
+  expect(secs).toBeLessThan(346);
 });
 
 // The honesty invariant: never a silent failure or a black screen.
@@ -200,6 +270,33 @@ test("12 — a build with no engine says so instead of failing silently", async 
   await expect(alert).toContainText(/no playback engine/);
 
   await page.screenshot({ path: `${DIR}/12-no-engine-honest-error.png` });
+});
+
+test("12b — the idle screen shows the drop zone and Open button", async ({ page }) => {
+  await boot(page);
+  await playerReady(page);
+
+  await expect(page.getByText("No media loaded")).toBeVisible();
+  await expect(page.getByText(/Drop a video here/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open media…" })).toBeVisible();
+
+  await page.screenshot({ path: `${DIR}/12b-idle-screen.png` });
+});
+
+test("12c — Continue watching lists resumable files and reopens one", async ({ page }) => {
+  await boot(page, "?recent=1");
+  await playerReady(page);
+
+  const row = page.getByRole("region", { name: "Continue watching" });
+  await expect(row).toBeVisible();
+  // The file stem is the display title; a progress bar shows how far in it is.
+  await expect(row.getByText("Arrival.2016")).toBeVisible();
+  await expect(row.getByText("Big Buck Bunny")).toBeVisible();
+  await page.screenshot({ path: `${DIR}/12d-continue-watching.png` });
+
+  await row.getByRole("button", { name: /Arrival\.2016/ }).click();
+  await expect.poll(() => invoked(page)).toContain("open_media");
+  expect(await lastArgs(page, "open_media")).toEqual({ path: "C:/Videos/Arrival.2016.mkv" });
 });
 
 test("13 — the video stage stays clear for the native surface", async ({ page }) => {
@@ -219,6 +316,18 @@ test("13 — the video stage stays clear for the native surface", async ({ page 
   expect(Number(rect?.height)).toBeGreaterThan(0);
   // Visible only because media is open — an empty surface would paint black over the stage.
   expect(rect?.visible).toBe(true);
+});
+
+test("11f — fullscreen hides the shell chrome and toggles its own label", async ({ page }) => {
+  await boot(page, "?media=1");
+  await playerReady(page);
+
+  // Entering fullscreen hides the title bar and footer so the picture fills the window.
+  await expect(page.getByRole("button", { name: "Minimize" })).toBeVisible();
+  await page.getByRole("button", { name: "Fullscreen", exact: true }).click();
+
+  await expect(page.getByRole("button", { name: "Exit fullscreen" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Minimize" })).toHaveCount(0);
 });
 
 test("14 — custom title bar, centred title and window controls", async ({ page }) => {
@@ -291,7 +400,7 @@ test("16 — Settings modal, Appearance and About panes", async ({ page }) => {
 
   await dialog.getByRole("button", { name: "About", exact: true }).click();
   await expect(dialog.getByText(/All Rights Reserved/)).toBeVisible();
-  await expect(dialog.getByText("0.10.0")).toBeVisible();
+  await expect(dialog.getByText("0.20.0")).toBeVisible();
   await page.screenshot({ path: `${DIR}/16b-settings-about.png` });
 });
 

@@ -37,14 +37,41 @@
     "Backtrace:\n   0: freally_player_core::mpv::MpvEngine::open\n   1: <home>/…\n";
 
   // The transport the gallery photographs. `?media=1` opens a file so the stage and
-  // transport render their playing state.
+  // transport render their playing state, with a couple of chapters for the scrubber ticks.
   const media =
     params.get("media") === "1"
-      ? { path: "C:/Videos/Big Buck Bunny.mkv", title: "Big Buck Bunny", durationSecs: 596 }
+      ? {
+          path: "C:/Videos/Big Buck Bunny.mkv",
+          title: "Big Buck Bunny",
+          durationSecs: 596,
+          chapters: [
+            { title: "Intro", startSecs: 0 },
+            { title: "The meadow", startSecs: 120 },
+            { title: "Finale", startSecs: 420 },
+          ],
+        }
       : null;
 
+  // The transport fields the control bar reads. `?media=1` plays; otherwise idle at rest.
+  const transport = {
+    volume: 100,
+    muted: false,
+    speed: 1,
+    bufferedSecs: media ? 596 : 0,
+    abLoop: { a: null, b: null },
+  };
+
+  // `?recent=1` seeds the idle screen's Continue-Watching row.
+  const recent =
+    params.get("recent") === "1"
+      ? [
+          { path: "C:/Videos/Arrival.2016.mkv", positionSecs: 1830, durationSecs: 7200 },
+          { path: "C:/Videos/Big Buck Bunny.mkv", positionSecs: 140, durationSecs: 596 },
+        ]
+      : [];
+
   const RESP = {
-    app_info: { name: "Freally Player", version: "0.10.0" },
+    app_info: { name: "Freally Player", version: "0.20.0" },
     // `?lang=xx` starts in a stored locale; with none, the UI detects one from the browser
     // exactly as a first run detects it from the OS.
     settings_get: {
@@ -55,19 +82,35 @@
     settings_set: null,
     eula_status: { version: "2026-07-21", text: EULA_TEXT, accepted: eulaAccepted },
     eula_accept: null,
+    // `?paused=1` opens the file paused (controls stay up, the toggle reads Play); otherwise
+    // a playing file.
     get_state: media
-      ? { status: "playing", positionSecs: 137, media }
-      : { status: "idle", positionSecs: 0, media: null },
+      ? {
+          status: params.get("paused") === "1" ? "paused" : "playing",
+          positionSecs: 137,
+          media,
+          ...transport,
+        }
+      : { status: "idle", positionSecs: 0, media: null, ...transport },
     open_media: media,
     play: null,
     pause: null,
+    toggle_play: null,
     seek: null,
     set_video_rect: null,
+    set_volume: null,
+    set_muted: null,
+    set_speed: null,
+    frame_step: null,
+    set_ab_loop: null,
+    set_chapter: null,
+    capture_frame: null,
+    recent_watch: recent,
     bug_report_context: {
-      appVersion: "0.10.0",
+      appVersion: "0.20.0",
       os: "windows",
       arch: "x86_64",
-      diagnostics: "App: Freally Player 0.10.0\nOS: windows / x86_64\n",
+      diagnostics: "App: Freally Player 0.20.0\nOS: windows / x86_64\n",
       pendingCrash: pendingCrash ? CRASH_EXCERPT : null,
     },
     bug_report_submit: null,
@@ -81,6 +124,9 @@
     if (cmd.startsWith("plugin:event|")) return 0;
     if (cmd === "plugin:dialog|open") {
       return params.get("cancel") === "1" ? null : "C:/Videos/Big Buck Bunny.mkv";
+    }
+    if (cmd === "plugin:dialog|save") {
+      return params.get("cancel") === "1" ? null : "C:/Videos/snapshot.png";
     }
     if (cmd.startsWith("plugin:")) return null;
     return null;

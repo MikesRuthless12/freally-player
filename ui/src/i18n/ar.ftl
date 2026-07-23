@@ -27,6 +27,26 @@ transport-pause = إيقاف مؤقت
 transport-back = −10 ث
 transport-forward = +10 ث
 
+scrubber-label = التنقل
+transport-frame-back = الإطار السابق
+transport-frame-forward = الإطار التالي
+transport-mute = كتم الصوت
+transport-unmute = إلغاء الكتم
+transport-volume = مستوى الصوت
+transport-speed = سرعة التشغيل
+transport-chapters = الفصول
+transport-chapter-n = الفصل { $n }
+transport-ab-set-a = تعيين بداية التكرار
+transport-ab-set-b = تعيين نهاية التكرار
+transport-ab-clear = مسح التكرار
+transport-snapshot = حفظ لقطة
+transport-fullscreen = ملء الشاشة
+transport-exit-fullscreen = إنهاء ملء الشاشة
+
+idle-title = لا توجد وسائط محمّلة
+idle-drop-hint = أفلِت مقطع فيديو هنا، أو افتح واحدًا.
+idle-continue = متابعة المشاهدة
+
 status-idle = خامل
 status-playing = قيد التشغيل
 status-paused = موقوف مؤقتًا

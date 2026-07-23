@@ -24,6 +24,26 @@ transport-pause = Wstrzymaj
 transport-back = −10 s
 transport-forward = +10 s
 
+scrubber-label = Przewiń
+transport-frame-back = Poprzednia klatka
+transport-frame-forward = Następna klatka
+transport-mute = Wycisz
+transport-unmute = Wyłącz wyciszenie
+transport-volume = Głośność
+transport-speed = Prędkość odtwarzania
+transport-chapters = Rozdziały
+transport-chapter-n = Rozdział { $n }
+transport-ab-set-a = Ustaw początek powtórzenia
+transport-ab-set-b = Ustaw koniec powtórzenia
+transport-ab-clear = Wyczyść powtórzenie
+transport-snapshot = Zapisz zrzut
+transport-fullscreen = Pełny ekran
+transport-exit-fullscreen = Zamknij pełny ekran
+
+idle-title = Nie wczytano żadnych multimediów
+idle-drop-hint = Upuść tutaj wideo lub otwórz jedno.
+idle-continue = Oglądaj dalej
+
 status-idle = bezczynny
 status-playing = odtwarzanie
 status-paused = wstrzymano
