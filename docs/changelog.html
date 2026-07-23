@@ -6,7 +6,7 @@
     <title>Freally Player — Releases &amp; Updates</title>
     <meta
       name="description"
-      content="Every Freally Player release, changelog, and desktop download in one place. Latest: v0.10.1 for Windows, macOS and Linux."
+      content="Every Freally Player release, changelog, and desktop download in one place. Latest: v0.20.0 for Windows, macOS and Linux."
     />
     <link rel="icon" href="favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
@@ -29,14 +29,42 @@
       <article class="release latest">
         <div class="release-head">
           <div class="meta">
-            <span class="badge">v0.10.1 · Latest</span>
-            <span class="date">Jul 22, 2026 · Project started Jun 30, 2026</span>
+            <span class="badge">v0.20.0 · Latest</span>
+            <span class="date">Jul 23, 2026 · Project started Jun 30, 2026</span>
           </div>
           <a
             class="dl-btn primary"
-            href="https://github.com/MikesRuthless12/freally-player/releases/tag/v0.10.1"
+            href="https://github.com/MikesRuthless12/freally-player/releases/tag/v0.20.0"
             >Downloads</a
           >
+        </div>
+
+        <h2>0.20.0 — core playback UI</h2>
+        <p class="summary">
+          The modern player, on top of the native surface. A glassy control bar sits under the
+          picture and gets out of the way while it plays; the whole transport is here — seek,
+          speed, A–B repeat, frame-step, snapshots, keyboard shortcuts, the OS media keys — and a
+          file reopens right where you left it. Freally Player is completely free — every feature
+          included. <strong>No ads, no telemetry, no account — ever.</strong>
+        </p>
+
+        <h3>New in 0.20.0</h3>
+        <ul class="features">
+          <li><strong>A glassy, auto-hiding control bar.</strong> Play/pause, frame-step, ±10s, a live clock, volume with mute, a playback-speed menu (0.25×–4.0×), A–B repeat, a chapters menu, snapshot, and fullscreen. It fades away while the picture plays and comes back the moment you move the mouse.</li>
+          <li><strong>A real scrubber.</strong> Click or drag to seek anywhere, with a buffered-range bar, chapter tick marks, the A–B loop shaded in, and a timecode that follows your cursor.</li>
+          <li><strong>Resume where you left off.</strong> A file reopens at the second you stopped, with the audio and subtitle tracks that were playing. A file that changed on disk starts fresh instead of dropping you in the wrong place, and the idle screen keeps a Continue-Watching row.</li>
+          <li><strong>Keyboard-first, and the hardware media keys work.</strong> Space, arrows, J/K/L, volume, mute, fullscreen, frame-step and speed from the keyboard; your OS's now-playing panel shows the title and play state, and its media keys drive the player.</li>
+          <li><strong>Snapshots.</strong> Save the current frame — with the subtitle overlay — to a PNG.</li>
+        </ul>
+      </article>
+
+      <!-- Previous release -->
+      <article class="release">
+        <div class="release-head">
+          <div class="meta">
+            <span class="badge">v0.10.1</span>
+            <span class="date">Jul 22, 2026</span>
+          </div>
         </div>
 
         <h2>0.10.1 — the first build that plays</h2>
@@ -70,10 +98,18 @@
         <h2>Roadmap to 1.0.0</h2>
         <ol class="timeline">
           <li>
-            <span class="badge upcoming">0.20.0 – 0.50.0</span>
+            <span class="badge done">0.20.0 ✓</span>
             <div>
-              <strong>Core playback, subtitles, audio, playlists</strong>
-              <p>Glassy controls + resume; full subtitles (ASS + online fetch); audiophile audio (EQ/exclusive/passthrough/tracks); playlists, video filters, mini-player/PiP.</p>
+              <strong>Core playback UI</strong>
+              <p>Glassy auto-hiding controls, scrubber with chapter ticks, speed, A–B repeat, frame-step, snapshots, keyboard shortcuts, OS media keys, and resume-from-position.</p>
+            </div>
+            <span class="soon">Shipped</span>
+          </li>
+          <li>
+            <span class="badge upcoming">0.30.0 – 0.50.0</span>
+            <div>
+              <strong>Subtitles, audio &amp; playlists</strong>
+              <p>Full subtitles (ASS + online fetch); audiophile audio (EQ/exclusive/passthrough/tracks); playlists, video filters, mini-player/PiP.</p>
             </div>
             <span class="soon">Coming soon</span>
           </li>

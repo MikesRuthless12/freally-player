@@ -149,6 +149,12 @@ main {
   background: transparent;
 }
 
+.badge.done {
+  color: #7ee2b8;
+  border-color: rgba(126, 226, 184, 0.45);
+  background: rgba(126, 226, 184, 0.12);
+}
+
 .date {
   color: var(--muted);
   font-size: 0.95rem;
