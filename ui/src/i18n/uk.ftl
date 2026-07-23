@@ -98,3 +98,57 @@ bug-copy = Скопіювати звіт
 bug-copied = Скопійовано
 bug-dismiss-crash = Відхилити збій
 bug-copy-failed = Не вдалося скопіювати звіт до буфера обміну.
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = Звук
+audio-tracks = Звукові доріжки
+audio-track-n = Доріжка { $n }
+
+subtitle-menu = Субтитри
+subtitle-tracks = Доріжка субтитрів
+subtitle-off = Вимк.
+subtitle-track-n = Доріжка { $n }
+subtitle-external = зовнішні
+subtitle-image-based = зображення
+subtitle-load-file = Завантажити файл субтитрів…
+subtitle-visible = Показувати субтитри
+subtitle-secondary = Другі субтитри
+subtitle-adjust = Синхронізація та розташування
+subtitle-delay = Затримка
+subtitle-position = Розташування
+subtitle-scale = Розмір
+subtitle-reset = Скинути
+unit-seconds-short = с
+
+subtitle-loaded = Субтитри завантажено.
+subtitle-loaded-encoding = Завантажено, перетворено з { $encoding }.
+subtitle-loaded-image = Завантажено графічні субтитри — стиль не застосовується.
+
+subtitle-online = Онлайн-субтитри
+subtitle-online-disabled = Увімкніть онлайн-субтитри в Налаштуваннях, щоб шукати.
+subtitle-online-query = Назва для пошуку
+subtitle-online-languages = Мови
+subtitle-online-search = Пошук
+subtitle-online-username = Ім'я користувача
+subtitle-online-password = Пароль
+subtitle-online-signin = Увійти
+
+settings-subtitles = Субтитри
+
+settings-sub-style-title = Стиль субтитрів
+settings-sub-style-hint = Задати вигляд субтитрів для зручності читання.
+settings-sub-style-enable = Перевизначити стиль субтитрів
+settings-sub-style-enable-hint = Використовує ваш шрифт, розмір і колір замість стилю з файлу. Застосовується лише до текстових субтитрів.
+settings-sub-style-font = Шрифт
+settings-sub-style-size = Розмір
+settings-sub-style-color = Колір
+
+settings-online-title = Онлайн-субтитри
+settings-online-hint = Завантажувати субтитри з OpenSubtitles. Типово вимкнено.
+settings-online-enable = Увімкнути завантаження онлайн-субтитрів
+settings-online-enable-hint = За бажанням. Потрібен власний безкоштовний обліковий запис OpenSubtitles і ключ API.
+settings-online-key = Ключ API
+settings-online-username = Ім'я користувача
+settings-online-privacy = Надсилаються лише назва та мови, які ви шукаєте. Ваш пароль ніколи не зберігається.

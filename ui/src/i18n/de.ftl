@@ -98,3 +98,57 @@ bug-copy = Bericht kopieren
 bug-copied = Kopiert
 bug-dismiss-crash = Absturz verwerfen
 bug-copy-failed = Der Bericht konnte nicht in die Zwischenablage kopiert werden.
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = Audio
+audio-tracks = Audiospuren
+audio-track-n = Spur { $n }
+
+subtitle-menu = Untertitel
+subtitle-tracks = Untertitelspur
+subtitle-off = Aus
+subtitle-track-n = Spur { $n }
+subtitle-external = extern
+subtitle-image-based = Bild
+subtitle-load-file = Untertiteldatei laden…
+subtitle-visible = Untertitel anzeigen
+subtitle-secondary = Zweiter Untertitel
+subtitle-adjust = Timing & Position
+subtitle-delay = Verzögerung
+subtitle-position = Position
+subtitle-scale = Größe
+subtitle-reset = Zurücksetzen
+unit-seconds-short = s
+
+subtitle-loaded = Untertitel geladen.
+subtitle-loaded-encoding = Geladen, aus { $encoding } konvertiert.
+subtitle-loaded-image = Bildbasierter Untertitel geladen – Stil wird nicht angewendet.
+
+subtitle-online = Online-Untertitel
+subtitle-online-disabled = Online-Untertitel in den Einstellungen aktivieren, um zu suchen.
+subtitle-online-query = Titel suchen
+subtitle-online-languages = Sprachen
+subtitle-online-search = Suchen
+subtitle-online-username = Benutzername
+subtitle-online-password = Passwort
+subtitle-online-signin = Anmelden
+
+settings-subtitles = Untertitel
+
+settings-sub-style-title = Untertitelstil
+settings-sub-style-hint = Erzwingt das Aussehen der Untertitel, für bessere Lesbarkeit.
+settings-sub-style-enable = Untertitelstil überschreiben
+settings-sub-style-enable-hint = Verwendet deine Schriftart, Größe und Farbe statt der Formatierung der Datei. Gilt nur für Textuntertitel.
+settings-sub-style-font = Schriftart
+settings-sub-style-size = Größe
+settings-sub-style-color = Farbe
+
+settings-online-title = Online-Untertitel
+settings-online-hint = Untertitel von OpenSubtitles laden. Standardmäßig aus.
+settings-online-enable = Online-Untertitelsuche aktivieren
+settings-online-enable-hint = Opt-in. Erfordert ein eigenes kostenloses OpenSubtitles-Konto und einen API-Schlüssel.
+settings-online-key = API-Schlüssel
+settings-online-username = Benutzername
+settings-online-privacy = Es werden nur der gesuchte Titel und die Sprachen gesendet. Dein Passwort wird nie gespeichert.

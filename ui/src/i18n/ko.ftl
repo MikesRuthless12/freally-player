@@ -98,3 +98,57 @@ bug-copy = 보고서 복사
 bug-copied = 복사됨
 bug-dismiss-crash = 충돌 무시
 bug-copy-failed = 보고서를 클립보드에 복사하지 못했습니다.
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = 오디오
+audio-tracks = 오디오 트랙
+audio-track-n = 트랙 { $n }
+
+subtitle-menu = 자막
+subtitle-tracks = 자막 트랙
+subtitle-off = 끄기
+subtitle-track-n = 트랙 { $n }
+subtitle-external = 외부
+subtitle-image-based = 이미지
+subtitle-load-file = 자막 파일 불러오기…
+subtitle-visible = 자막 표시
+subtitle-secondary = 두 번째 자막
+subtitle-adjust = 타이밍 및 위치
+subtitle-delay = 지연
+subtitle-position = 위치
+subtitle-scale = 크기
+subtitle-reset = 초기화
+unit-seconds-short = 초
+
+subtitle-loaded = 자막을 불러왔습니다.
+subtitle-loaded-encoding = { $encoding }에서 변환하여 불러왔습니다.
+subtitle-loaded-image = 이미지 기반 자막을 불러왔습니다 — 스타일은 적용되지 않습니다.
+
+subtitle-online = 온라인 자막
+subtitle-online-disabled = 검색하려면 설정에서 온라인 자막을 켜세요.
+subtitle-online-query = 검색할 제목
+subtitle-online-languages = 언어
+subtitle-online-search = 검색
+subtitle-online-username = 사용자 이름
+subtitle-online-password = 비밀번호
+subtitle-online-signin = 로그인
+
+settings-subtitles = 자막
+
+settings-sub-style-title = 자막 스타일
+settings-sub-style-hint = 가독성을 위해 자막 모양을 강제합니다.
+settings-sub-style-enable = 자막 스타일 재정의
+settings-sub-style-enable-hint = 파일 자체 스타일 대신 지정한 글꼴, 크기, 색상을 사용합니다. 텍스트 자막에만 적용됩니다.
+settings-sub-style-font = 글꼴
+settings-sub-style-size = 크기
+settings-sub-style-color = 색상
+
+settings-online-title = 온라인 자막
+settings-online-hint = OpenSubtitles에서 자막을 가져옵니다. 기본값은 꺼짐입니다.
+settings-online-enable = 온라인 자막 가져오기 사용
+settings-online-enable-hint = 선택 사항. 본인의 무료 OpenSubtitles 계정과 API 키가 필요합니다.
+settings-online-key = API 키
+settings-online-username = 사용자 이름
+settings-online-privacy = 검색한 제목과 언어만 전송됩니다. 비밀번호는 저장되지 않습니다.

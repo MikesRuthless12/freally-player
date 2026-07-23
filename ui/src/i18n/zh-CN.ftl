@@ -98,3 +98,57 @@ bug-copy = 复制报告
 bug-copied = 已复制
 bug-dismiss-crash = 忽略此次崩溃
 bug-copy-failed = 无法将报告复制到剪贴板。
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = 音频
+audio-tracks = 音频轨道
+audio-track-n = 轨道 { $n }
+
+subtitle-menu = 字幕
+subtitle-tracks = 字幕轨道
+subtitle-off = 关闭
+subtitle-track-n = 轨道 { $n }
+subtitle-external = 外部
+subtitle-image-based = 图形
+subtitle-load-file = 加载字幕文件…
+subtitle-visible = 显示字幕
+subtitle-secondary = 第二字幕
+subtitle-adjust = 时间与位置
+subtitle-delay = 延迟
+subtitle-position = 位置
+subtitle-scale = 大小
+subtitle-reset = 重置
+unit-seconds-short = 秒
+
+subtitle-loaded = 已加载字幕。
+subtitle-loaded-encoding = 已加载，从 { $encoding } 转换。
+subtitle-loaded-image = 已加载图形字幕——样式不适用。
+
+subtitle-online = 在线字幕
+subtitle-online-disabled = 在设置中开启在线字幕以进行搜索。
+subtitle-online-query = 搜索标题
+subtitle-online-languages = 语言
+subtitle-online-search = 搜索
+subtitle-online-username = 用户名
+subtitle-online-password = 密码
+subtitle-online-signin = 登录
+
+settings-subtitles = 字幕
+
+settings-sub-style-title = 字幕样式
+settings-sub-style-hint = 为提升可读性，强制字幕的外观。
+settings-sub-style-enable = 覆盖字幕样式
+settings-sub-style-enable-hint = 使用你设置的字体、大小和颜色，而非文件自带的样式。仅适用于文本字幕。
+settings-sub-style-font = 字体
+settings-sub-style-size = 大小
+settings-sub-style-color = 颜色
+
+settings-online-title = 在线字幕
+settings-online-hint = 从 OpenSubtitles 获取字幕。默认关闭。
+settings-online-enable = 启用在线字幕获取
+settings-online-enable-hint = 需选择启用。需要你自己的免费 OpenSubtitles 账户和 API 密钥。
+settings-online-key = API 密钥
+settings-online-username = 用户名
+settings-online-privacy = 只发送你搜索的标题和语言。你的密码绝不会被保存。

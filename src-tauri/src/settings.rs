@@ -14,6 +14,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
+use freally_player_core::SubStyleOverride;
 use serde::{Deserialize, Serialize};
 
 use crate::paths;
@@ -69,8 +70,23 @@ impl WindowSettings {
     }
 }
 
+/// The opt-in OpenSubtitles configuration. Off unless the user enables it and supplies their
+/// own API key (a free account). The account **password is never stored** — it is exchanged
+/// for a short-lived session token at fetch time; only the username identifier is kept.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct OpenSubtitlesSettings {
+    /// Whether online subtitle fetch is turned on. Off by default; nothing reaches the network
+    /// until this is true.
+    pub enabled: bool,
+    /// The user's own OpenSubtitles API key.
+    pub api_key: Option<String>,
+    /// The account username, kept to pre-fill the login. The password is never persisted.
+    pub username: Option<String>,
+}
+
 /// Everything persisted between runs.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Settings {
     pub schema_version: u32,
@@ -79,6 +95,11 @@ pub struct Settings {
     pub theme: Theme,
     /// Minimising hides to the system tray instead of the taskbar.
     pub minimize_to_tray: bool,
+    /// A user override of subtitle styling (font/size/colour) for readability. Off by default;
+    /// when on it overrides the file's own ASS styling. Applies to text subtitles only.
+    pub subtitle_style: SubStyleOverride,
+    /// Opt-in online subtitle fetch (OpenSubtitles).
+    pub opensubtitles: OpenSubtitlesSettings,
     /// The chosen UI language as a BCP-47 tag, or `None` until the user picks one — in which
     /// case the first run detects it from the OS.
     ///
@@ -99,6 +120,8 @@ impl Default for Settings {
             window: WindowSettings::default(),
             theme: Theme::default(),
             minimize_to_tray: false,
+            subtitle_style: SubStyleOverride::default(),
+            opensubtitles: OpenSubtitlesSettings::default(),
             language: None,
             accepted_eula_version: None,
         }
@@ -106,13 +129,17 @@ impl Default for Settings {
 }
 
 /// The subset of [`Settings`] the Settings modal owns.
-#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct UserSettings {
     pub theme: Theme,
     /// Minimising hides to the system tray instead of the taskbar. Off by default, so a user
     /// who never opens Settings gets ordinary minimise behaviour.
     pub minimize_to_tray: bool,
+    /// The subtitle-styling override for readability (off by default).
+    pub subtitle_style: SubStyleOverride,
+    /// Opt-in online subtitle fetch configuration.
+    pub opensubtitles: OpenSubtitlesSettings,
     /// The chosen UI language, or `None` while the first run is still following the OS.
     pub language: Option<String>,
 }
@@ -189,6 +216,8 @@ impl SettingsStore {
         UserSettings {
             theme: current.theme,
             minimize_to_tray: current.minimize_to_tray,
+            subtitle_style: current.subtitle_style,
+            opensubtitles: current.opensubtitles,
             language: current.language,
         }
     }
@@ -202,6 +231,8 @@ impl SettingsStore {
         let mut settings = self.get();
         settings.theme = next.theme;
         settings.minimize_to_tray = next.minimize_to_tray;
+        settings.subtitle_style = next.subtitle_style;
+        settings.opensubtitles = next.opensubtitles;
         settings.language = next.language;
         self.set(settings)
     }
@@ -383,6 +414,7 @@ mod tests {
                 theme: Theme::Light,
                 minimize_to_tray: true,
                 language: Some("ja".to_owned()),
+                ..UserSettings::default()
             })
             .expect("persist preferences");
 
@@ -403,6 +435,7 @@ mod tests {
                 theme: Theme::Light,
                 minimize_to_tray: true,
                 language: Some("pt-BR".to_owned()),
+                ..UserSettings::default()
             })
             .expect("persist");
 
@@ -426,6 +459,7 @@ mod tests {
                 theme: Theme::Dark,
                 minimize_to_tray: false,
                 language: None,
+                ..UserSettings::default()
             })
             .expect("persist");
 
@@ -472,6 +506,60 @@ mod tests {
             settings.accepted_eula_version.as_deref(),
             Some("2026-07-21")
         );
+    }
+
+    #[test]
+    fn subtitle_style_and_opensubtitles_round_trip() {
+        let path = scratch("subs");
+        SettingsStore::load_from(path.clone())
+            .set_user_settings(UserSettings {
+                subtitle_style: SubStyleOverride {
+                    enabled: true,
+                    font: Some("Atkinson Hyperlegible".to_owned()),
+                    font_size: Some(64.0),
+                    color: Some("#FFEE00".to_owned()),
+                },
+                opensubtitles: OpenSubtitlesSettings {
+                    enabled: true,
+                    api_key: Some("secret-key".to_owned()),
+                    username: Some("cinephile".to_owned()),
+                },
+                ..UserSettings::default()
+            })
+            .expect("persist");
+
+        let reloaded = SettingsStore::load_from(path).user_settings();
+        assert!(reloaded.subtitle_style.enabled);
+        assert_eq!(
+            reloaded.subtitle_style.font.as_deref(),
+            Some("Atkinson Hyperlegible")
+        );
+        assert!(reloaded.opensubtitles.enabled);
+        assert_eq!(
+            reloaded.opensubtitles.api_key.as_deref(),
+            Some("secret-key")
+        );
+        assert_eq!(
+            reloaded.opensubtitles.username.as_deref(),
+            Some("cinephile")
+        );
+    }
+
+    /// A settings file written before the subtitle fields existed must still load, with those
+    /// fields at their defaults — not fail the parse and wipe everything else.
+    #[test]
+    fn a_file_from_before_the_subtitle_settings_still_loads() {
+        let path = scratch("pre-subs");
+        fs::write(
+            &path,
+            r#"{"theme":"light","language":"fr","acceptedEulaVersion":"2026-07-21"}"#,
+        )
+        .expect("write file");
+        let settings = SettingsStore::load_from(path).get();
+        assert_eq!(settings.theme, Theme::Light);
+        assert!(!settings.subtitle_style.enabled);
+        assert!(!settings.opensubtitles.enabled);
+        assert_eq!(settings.language.as_deref(), Some("fr"));
     }
 
     #[test]

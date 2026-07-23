@@ -49,6 +49,43 @@ pub struct Chapter {
     pub start_secs: f64,
 }
 
+/// What a selectable track carries.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TrackKind {
+    Audio,
+    /// A subtitle track, embedded or added from an external file.
+    Sub,
+    /// A video track. Enumerated for completeness; the transport menus only offer audio and
+    /// subtitle switching.
+    Video,
+}
+
+/// A selectable media track the backend reports — an audio, subtitle, or video stream.
+///
+/// The `id` is the backend's per-kind selector (mpv's `aid`/`sid`): switching a track means
+/// asking the engine to select this id for its kind. Nothing here decodes; it only names what
+/// the demuxer (and any added external subtitle) makes available so the UI can offer a choice.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Track {
+    /// The backend's per-kind track id — its `aid` for audio, `sid` for subtitles.
+    pub id: i64,
+    pub kind: TrackKind,
+    /// The language tag the file declares for the track, when it declares one.
+    pub lang: Option<String>,
+    /// The track's own title, when the file names it.
+    pub title: Option<String>,
+    /// Whether the demuxer marks this the default track for its kind.
+    pub default: bool,
+    /// Whether this subtitle was added from an external file rather than the media container.
+    pub external: bool,
+    /// Whether the track is image-based (PGS/VobSub) rather than text. Style and font overrides
+    /// only apply to text subtitles, so the UI can say so honestly instead of offering controls
+    /// that do nothing.
+    pub image_based: bool,
+}
+
 /// What is currently open.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -62,6 +99,10 @@ pub struct MediaInfo {
     /// Chapter markers, empty until the demuxer has read them (and for files with none).
     #[serde(default)]
     pub chapters: Vec<Chapter>,
+    /// The audio/subtitle/video tracks the media exposes, plus any externally added subtitles.
+    /// Empty until the demuxer has read the header (and grows when an external subtitle loads).
+    #[serde(default)]
+    pub tracks: Vec<Track>,
 }
 
 /// An A–B repeat range. Either end may be unset while the user is still marking it.
@@ -70,6 +111,93 @@ pub struct MediaInfo {
 pub struct AbLoop {
     pub a: Option<f64>,
     pub b: Option<f64>,
+}
+
+/// The subtitle transport: which tracks are showing and how they are timed and placed.
+///
+/// The rendering itself is the engine's (libass into the video surface) — none of this crosses
+/// IPC as pixels. These values only mirror what the engine is doing so the menu can reflect and
+/// adjust it. A second, independent track ([`secondary_id`]) drives the two-subtitles-at-once
+/// case (e.g. language learning); it sits at the top of the frame by default.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubtitleState {
+    /// The primary subtitle track (mpv `sid`), or `None` when subtitles are off.
+    pub id: Option<i64>,
+    /// The secondary subtitle track (mpv `secondary-sid`), shown at once with the primary.
+    pub secondary_id: Option<i64>,
+    /// Whether the primary subtitle is being displayed (mpv `sub-visibility`).
+    pub visible: bool,
+    /// Timing offset in seconds (mpv `sub-delay`); positive shows subtitles later.
+    pub delay_secs: f64,
+    /// Vertical position on mpv's 0–150 scale (`sub-pos`); 100 is the default bottom line.
+    pub pos: i64,
+    /// Size multiplier (mpv `sub-scale`); 1.0 is the author's / default size.
+    pub scale: f64,
+}
+
+/// Subtitles at rest: primary auto-selected by the backend, none forced off, default timing.
+impl Default for SubtitleState {
+    fn default() -> Self {
+        Self {
+            id: None,
+            secondary_id: None,
+            visible: true,
+            delay_secs: 0.0,
+            pos: SUB_POS_DEFAULT,
+            scale: 1.0,
+        }
+    }
+}
+
+/// A user override of subtitle styling — forcing a font, size, or colour over what the file's
+/// ASS styling asks for. Off by default: it exists for readability/accessibility, and turning
+/// it on overrides the author's intended styling, which the UI states plainly.
+///
+/// It applies to text subtitles only; image-based tracks (PGS/VobSub) carry their own bitmaps
+/// and ignore it. All fields default to "no override", which is why `Default` is derived.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubStyleOverride {
+    /// Whether the override is active. When off, the file's own ASS styling is respected.
+    pub enabled: bool,
+    /// Font family to force, or `None` to keep the default sans face.
+    pub font: Option<String>,
+    /// Font size (mpv `sub-font-size`), or `None` for the default.
+    pub font_size: Option<f64>,
+    /// Text colour as `#RRGGBB`, or `None` for the default.
+    pub color: Option<String>,
+}
+
+/// The default subtitle position on mpv's 0–150 scale — the bottom line.
+pub const SUB_POS_DEFAULT: i64 = 100;
+/// The subtitle-timing offset range the transport exposes, in seconds either way.
+pub const SUB_DELAY_MAX_SECS: f64 = 120.0;
+/// The subtitle size-multiplier range (`sub-scale`).
+pub const SUB_SCALE_MIN: f64 = 0.25;
+pub const SUB_SCALE_MAX: f64 = 4.0;
+
+/// Clamp a subtitle position onto mpv's 0–150 scale.
+pub fn clamp_sub_pos(pos: i64) -> i64 {
+    pos.clamp(0, 150)
+}
+
+/// Clamp a subtitle delay to a sane range, treating a non-finite request as no delay.
+pub fn clamp_sub_delay(secs: f64) -> f64 {
+    if secs.is_finite() {
+        secs.clamp(-SUB_DELAY_MAX_SECS, SUB_DELAY_MAX_SECS)
+    } else {
+        0.0
+    }
+}
+
+/// Clamp a subtitle scale into the supported range, treating a non-finite request as 1.0.
+pub fn clamp_sub_scale(scale: f64) -> f64 {
+    if scale.is_finite() {
+        scale.clamp(SUB_SCALE_MIN, SUB_SCALE_MAX)
+    } else {
+        1.0
+    }
 }
 
 /// The transport snapshot the UI mirrors. **No pixels travel this path.**
@@ -88,6 +216,10 @@ pub struct PlaybackState {
     /// file this reaches the duration quickly; for a stream it trails the download.
     pub buffered_secs: f64,
     pub ab_loop: AbLoop,
+    /// The selected audio track (mpv `aid`), or `None` when the backend has not chosen one.
+    pub audio_id: Option<i64>,
+    /// The subtitle transport — selected tracks, timing, and placement.
+    pub subtitle: SubtitleState,
 }
 
 /// A player that has nothing open sits at these transport defaults — full volume, normal
@@ -103,6 +235,8 @@ impl Default for PlaybackState {
             speed: 1.0,
             buffered_secs: 0.0,
             ab_loop: AbLoop::default(),
+            audio_id: None,
+            subtitle: SubtitleState::default(),
         }
     }
 }
@@ -240,6 +374,64 @@ pub trait Engine: Send {
     /// Write the current frame to `path`. `with_subs` includes the subtitle overlay.
     fn capture_frame(&mut self, path: &str, with_subs: bool) -> Result<(), EngineError> {
         let _ = (path, with_subs);
+        Err(EngineError::NothingOpen)
+    }
+
+    // --- Tracks & subtitles (Phase 2). Same pattern as the Phase 1 extras: a default that
+    // refuses with `NothingOpen`, overridden by a real backend. The rendering stays the
+    // engine's (libass into the surface) — these only select and adjust it. ---
+
+    /// The audio/subtitle/video tracks the backend currently knows about, including any
+    /// externally added subtitles. Empty until a header is parsed.
+    fn tracks(&self) -> Vec<Track> {
+        Vec::new()
+    }
+    /// Select the audio track by id (mpv `aid`), or `None` to disable audio.
+    fn set_audio_track(&mut self, id: Option<i64>) -> Result<(), EngineError> {
+        let _ = id;
+        Err(EngineError::NothingOpen)
+    }
+    /// Select the primary subtitle track (mpv `sid`), or `None` to turn subtitles off.
+    fn set_sub_track(&mut self, id: Option<i64>) -> Result<(), EngineError> {
+        let _ = id;
+        Err(EngineError::NothingOpen)
+    }
+    /// Select the secondary subtitle track (mpv `secondary-sid`) shown at once with the
+    /// primary, or `None` to turn the second track off.
+    fn set_secondary_sub_track(&mut self, id: Option<i64>) -> Result<(), EngineError> {
+        let _ = id;
+        Err(EngineError::NothingOpen)
+    }
+    /// Add an external subtitle file already decoded to a safe UTF-8 form by the owned
+    /// subtitle pipeline, returning the new track's id. `select` makes it the primary track.
+    fn add_sub_file(&mut self, path: &str, select: bool) -> Result<i64, EngineError> {
+        let _ = (path, select);
+        Err(EngineError::NothingOpen)
+    }
+    /// Show or hide the primary subtitle without forgetting which track is selected.
+    fn set_sub_visible(&mut self, visible: bool) -> Result<(), EngineError> {
+        let _ = visible;
+        Err(EngineError::NothingOpen)
+    }
+    /// Set the subtitle timing offset in seconds (mpv `sub-delay`); the caller clamps it.
+    fn set_sub_delay(&mut self, secs: f64) -> Result<(), EngineError> {
+        let _ = secs;
+        Err(EngineError::NothingOpen)
+    }
+    /// Set the primary subtitle's vertical position on mpv's 0–150 scale (`sub-pos`).
+    fn set_sub_pos(&mut self, pos: i64) -> Result<(), EngineError> {
+        let _ = pos;
+        Err(EngineError::NothingOpen)
+    }
+    /// Set the subtitle size multiplier (mpv `sub-scale`); the caller clamps it.
+    fn set_sub_scale(&mut self, scale: f64) -> Result<(), EngineError> {
+        let _ = scale;
+        Err(EngineError::NothingOpen)
+    }
+    /// Apply (or clear) a user override of subtitle styling — forcing a font/size/colour over
+    /// the file's ASS styling for readability. Ignored by image-based tracks.
+    fn set_sub_style_override(&mut self, style: &SubStyleOverride) -> Result<(), EngineError> {
+        let _ = style;
         Err(EngineError::NothingOpen)
     }
 
@@ -405,6 +597,55 @@ mod tests {
         assert_eq!(json["muted"], false);
         assert_eq!(json["speed"], 1.0);
         assert!(json["abLoop"]["a"].is_null());
+        // Phase 2 subtitle transport: nothing forced, visible, default placement.
+        assert!(json["audioId"].is_null());
+        assert!(json["subtitle"]["id"].is_null());
+        assert!(json["subtitle"]["secondaryId"].is_null());
+        assert_eq!(json["subtitle"]["visible"], true);
+        assert_eq!(json["subtitle"]["delaySecs"], 0.0);
+        assert_eq!(json["subtitle"]["pos"], SUB_POS_DEFAULT);
+        assert_eq!(json["subtitle"]["scale"], 1.0);
+    }
+
+    #[test]
+    fn a_track_serializes_as_the_ui_expects() {
+        let track = Track {
+            id: 2,
+            kind: TrackKind::Sub,
+            lang: Some("en".to_owned()),
+            title: Some("English (SDH)".to_owned()),
+            default: true,
+            external: false,
+            image_based: false,
+        };
+        let json = serde_json::to_value(&track).expect("serialize");
+        assert_eq!(json["id"], 2);
+        assert_eq!(json["kind"], "sub");
+        assert_eq!(json["lang"], "en");
+        assert_eq!(json["imageBased"], false);
+    }
+
+    #[test]
+    fn subtitle_position_is_clamped_to_mpvs_scale() {
+        assert_eq!(clamp_sub_pos(100), 100);
+        assert_eq!(clamp_sub_pos(-20), 0);
+        assert_eq!(clamp_sub_pos(999), 150);
+    }
+
+    #[test]
+    fn subtitle_delay_is_clamped_and_rejects_nonfinite() {
+        assert_eq!(clamp_sub_delay(2.5), 2.5);
+        assert_eq!(clamp_sub_delay(1_000.0), SUB_DELAY_MAX_SECS);
+        assert_eq!(clamp_sub_delay(-1_000.0), -SUB_DELAY_MAX_SECS);
+        assert_eq!(clamp_sub_delay(f64::NAN), 0.0);
+    }
+
+    #[test]
+    fn subtitle_scale_is_clamped_and_rejects_nonfinite() {
+        assert_eq!(clamp_sub_scale(1.0), 1.0);
+        assert_eq!(clamp_sub_scale(0.01), SUB_SCALE_MIN);
+        assert_eq!(clamp_sub_scale(99.0), SUB_SCALE_MAX);
+        assert_eq!(clamp_sub_scale(f64::INFINITY), 1.0);
     }
 
     #[test]

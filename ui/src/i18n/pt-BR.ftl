@@ -98,3 +98,57 @@ bug-copy = Copiar relatório
 bug-copied = Copiado
 bug-dismiss-crash = Descartar a falha
 bug-copy-failed = Não foi possível copiar o relatório para a área de transferência.
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = Áudio
+audio-tracks = Faixas de áudio
+audio-track-n = Faixa { $n }
+
+subtitle-menu = Legendas
+subtitle-tracks = Faixa de legenda
+subtitle-off = Desativadas
+subtitle-track-n = Faixa { $n }
+subtitle-external = externa
+subtitle-image-based = imagem
+subtitle-load-file = Carregar arquivo de legenda…
+subtitle-visible = Mostrar legendas
+subtitle-secondary = Segunda legenda
+subtitle-adjust = Sincronia e posição
+subtitle-delay = Atraso
+subtitle-position = Posição
+subtitle-scale = Tamanho
+subtitle-reset = Redefinir
+unit-seconds-short = s
+
+subtitle-loaded = Legenda carregada.
+subtitle-loaded-encoding = Carregada, convertida de { $encoding }.
+subtitle-loaded-image = Legenda em imagem carregada — o estilo não se aplica.
+
+subtitle-online = Legendas online
+subtitle-online-disabled = Ative as legendas online nas Configurações para pesquisar.
+subtitle-online-query = Título a pesquisar
+subtitle-online-languages = Idiomas
+subtitle-online-search = Pesquisar
+subtitle-online-username = Nome de usuário
+subtitle-online-password = Senha
+subtitle-online-signin = Entrar
+
+settings-subtitles = Legendas
+
+settings-sub-style-title = Estilo das legendas
+settings-sub-style-hint = Force a aparência das legendas, para legibilidade.
+settings-sub-style-enable = Substituir o estilo das legendas
+settings-sub-style-enable-hint = Usa sua fonte, tamanho e cor em vez do estilo do arquivo. Aplica-se apenas a legendas de texto.
+settings-sub-style-font = Fonte
+settings-sub-style-size = Tamanho
+settings-sub-style-color = Cor
+
+settings-online-title = Legendas online
+settings-online-hint = Buscar legendas no OpenSubtitles. Desativado por padrão.
+settings-online-enable = Ativar a busca de legendas online
+settings-online-enable-hint = Opcional. Requer sua própria conta gratuita do OpenSubtitles e uma chave de API.
+settings-online-key = Chave de API
+settings-online-username = Nome de usuário
+settings-online-privacy = Apenas o título e os idiomas que você pesquisa são enviados. Sua senha nunca é armazenada.

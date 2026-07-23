@@ -98,3 +98,57 @@ bug-copy = Copier le rapport
 bug-copied = Copié
 bug-dismiss-crash = Ignorer le plantage
 bug-copy-failed = Impossible de copier le rapport dans le presse-papiers.
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = Audio
+audio-tracks = Pistes audio
+audio-track-n = Piste { $n }
+
+subtitle-menu = Sous-titres
+subtitle-tracks = Piste de sous-titres
+subtitle-off = Désactivés
+subtitle-track-n = Piste { $n }
+subtitle-external = externe
+subtitle-image-based = image
+subtitle-load-file = Charger un fichier de sous-titres…
+subtitle-visible = Afficher les sous-titres
+subtitle-secondary = Second sous-titre
+subtitle-adjust = Synchronisation et position
+subtitle-delay = Décalage
+subtitle-position = Position
+subtitle-scale = Taille
+subtitle-reset = Réinitialiser
+unit-seconds-short = s
+
+subtitle-loaded = Sous-titre chargé.
+subtitle-loaded-encoding = Chargé, converti depuis { $encoding }.
+subtitle-loaded-image = Sous-titre image chargé — le style ne s'applique pas.
+
+subtitle-online = Sous-titres en ligne
+subtitle-online-disabled = Activez les sous-titres en ligne dans les Réglages pour rechercher.
+subtitle-online-query = Titre à rechercher
+subtitle-online-languages = Langues
+subtitle-online-search = Rechercher
+subtitle-online-username = Nom d'utilisateur
+subtitle-online-password = Mot de passe
+subtitle-online-signin = Se connecter
+
+settings-subtitles = Sous-titres
+
+settings-sub-style-title = Style des sous-titres
+settings-sub-style-hint = Impose l'apparence des sous-titres, pour la lisibilité.
+settings-sub-style-enable = Remplacer le style des sous-titres
+settings-sub-style-enable-hint = Utilise votre police, taille et couleur au lieu du style du fichier. Ne s'applique qu'aux sous-titres texte.
+settings-sub-style-font = Police
+settings-sub-style-size = Taille
+settings-sub-style-color = Couleur
+
+settings-online-title = Sous-titres en ligne
+settings-online-hint = Récupérer des sous-titres depuis OpenSubtitles. Désactivé par défaut.
+settings-online-enable = Activer la recherche de sous-titres en ligne
+settings-online-enable-hint = Optionnel. Nécessite votre propre compte OpenSubtitles gratuit et une clé d'API.
+settings-online-key = Clé d'API
+settings-online-username = Nom d'utilisateur
+settings-online-privacy = Seuls le titre et les langues recherchés sont envoyés. Votre mot de passe n'est jamais enregistré.

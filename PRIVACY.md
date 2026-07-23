@@ -29,7 +29,10 @@ Freally Player works **fully offline** for playback, the media library, subtitle
 you already have, and editing/conversion. It uses the network **only** when **you**
 take an action that needs it — specifically:
 
-- **Online subtitle fetch** (e.g. OpenSubtitles) — when you ask it to find subtitles;
+- **Online subtitle fetch** (OpenSubtitles) — **off by default.** Only when you turn it on,
+  supply your own API key, and search: it sends **only the title text and language codes you
+  entered**. Downloading needs your own account login; your **password is never stored** — it
+  is exchanged for a short-lived session token held in memory for that session only;
 - **Library metadata & artwork scraping** (e.g. TMDB / TVDB / MusicBrainz) — when
   you enable scraping for your library;
 - **Network / URL streaming** — when you open a network stream (HLS/DASH/RTSP/SMB/…)

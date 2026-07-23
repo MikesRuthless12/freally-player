@@ -47,9 +47,13 @@ remediate before any public disclosure.
   allowlist/capabilities are scoped to the minimum commands the UI needs.
 - **Subtitle rendering.** ASS/SSA subtitles are a scripting-capable format; rendering is handled by
   the engine's subtitle renderer (libass via mpv) with embedded-font and drawing handling kept to the
-  engine's hardened path. Online subtitle fetch (OpenSubtitles) is **opt-in**, over **TLS** to a
-  fixed host; downloaded subtitle files are treated as untrusted input and parsed through the same
-  bounded path.
+  engine's hardened path. **External subtitle files are treated as untrusted input in the owned
+  `crates/subtitles` loader before the engine sees them**: the read is **size-bounded**, and text
+  subtitles have their charset auto-detected and are **transcoded to UTF-8** rather than handed to
+  libass in an arbitrary encoding (image-based PGS/VobSub tracks are bounded and passed through by
+  path). Online subtitle fetch (OpenSubtitles) is **opt-in and off by default**, over **TLS** to a
+  fixed host, sending only the title/language you searched; the account password is never persisted.
+  Downloaded files go through the same bounded, transcoding loader as local ones.
 - **yt-dlp sidecar (URL playback).** YouTube/site URL playback runs **yt-dlp as a separate
   subprocess** (not linked into the app), invoked with an **argv vector (no shell)**; the app passes
   only the URL you entered. yt-dlp is **downloaded on demand** to a per-user cache and then executed.

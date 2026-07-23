@@ -98,3 +98,57 @@ bug-copy = Rapport kopiëren
 bug-copied = Gekopieerd
 bug-dismiss-crash = Crash negeren
 bug-copy-failed = Het rapport kon niet naar het klembord worden gekopieerd.
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = Audio
+audio-tracks = Audiotracks
+audio-track-n = Track { $n }
+
+subtitle-menu = Ondertitels
+subtitle-tracks = Ondertiteltrack
+subtitle-off = Uit
+subtitle-track-n = Track { $n }
+subtitle-external = extern
+subtitle-image-based = afbeelding
+subtitle-load-file = Ondertitelbestand laden…
+subtitle-visible = Ondertitels tonen
+subtitle-secondary = Tweede ondertitel
+subtitle-adjust = Timing en positie
+subtitle-delay = Vertraging
+subtitle-position = Positie
+subtitle-scale = Grootte
+subtitle-reset = Herstellen
+unit-seconds-short = s
+
+subtitle-loaded = Ondertitel geladen.
+subtitle-loaded-encoding = Geladen, geconverteerd vanuit { $encoding }.
+subtitle-loaded-image = Beeldondertitel geladen — opmaak is niet van toepassing.
+
+subtitle-online = Online ondertitels
+subtitle-online-disabled = Schakel online ondertitels in bij Instellingen om te zoeken.
+subtitle-online-query = Titel om te zoeken
+subtitle-online-languages = Talen
+subtitle-online-search = Zoeken
+subtitle-online-username = Gebruikersnaam
+subtitle-online-password = Wachtwoord
+subtitle-online-signin = Aanmelden
+
+settings-subtitles = Ondertitels
+
+settings-sub-style-title = Ondertitelstijl
+settings-sub-style-hint = Forceer hoe ondertitels eruitzien, voor leesbaarheid.
+settings-sub-style-enable = Ondertitelstijl overschrijven
+settings-sub-style-enable-hint = Gebruikt jouw lettertype, grootte en kleur in plaats van de opmaak van het bestand. Alleen voor tekstondertitels.
+settings-sub-style-font = Lettertype
+settings-sub-style-size = Grootte
+settings-sub-style-color = Kleur
+
+settings-online-title = Online ondertitels
+settings-online-hint = Haal ondertitels op van OpenSubtitles. Standaard uit.
+settings-online-enable = Online ondertitels ophalen inschakelen
+settings-online-enable-hint = Optioneel. Vereist je eigen gratis OpenSubtitles-account en API-sleutel.
+settings-online-key = API-sleutel
+settings-online-username = Gebruikersnaam
+settings-online-privacy = Alleen de titel en talen die je zoekt worden verzonden. Je wachtwoord wordt nooit opgeslagen.

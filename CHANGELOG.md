@@ -17,6 +17,35 @@ release).
 
 ## [Unreleased]
 
+### Added — Phase 2: subtitles
+- **Subtitle & audio track switching** — a subtitle menu and an audio menu in the control bar,
+  each listing the media's tracks (a track's own title, else its language spelled out in the UI
+  language, else a numbered fallback) with the current one marked. Switching is instant; the
+  engine changes `sid`/`aid` and the transport snapshot reflects it. Tracks are read from the
+  engine's track list, which grows when an external subtitle is added
+  ([`crates/player`](crates/player), [`commands/subtitles.rs`](src-tauri/src/commands/subtitles.rs)).
+- **External subtitle load with encoding auto-detect** — open an SRT/ASS/SSA/WebVTT/MicroDVD/PGS/
+  VobSub file. Text subtitles are treated as **untrusted input**: the read is bounded, the charset
+  is auto-detected (`chardetng`) and transcoded to UTF-8 (`encoding_rs`) before libass ever sees
+  it, so a legacy Windows-1251 or Shift-JIS file renders as its real letters rather than mojibake.
+  Image-based tracks (PGS/VobSub) are bounded and passed through by path. The UI names what
+  happened honestly ("Loaded, converted from windows-1251") ([`crates/subtitles`](crates/subtitles)).
+- **Sync, position & scale, remembered per file** — nudge the subtitle delay to match an off SRT,
+  move the line up off a hardcoded caption, or resize it; the adjustment is remembered for *that
+  file* (a JSON map with the same size+mtime identity check as the resume store) and reapplied
+  next time. Rendering stays the engine's job — libass draws into the video surface; the web layer
+  never paints a subtitle over the picture.
+- **Secondary subtitles** — show two subtitle tracks at once (e.g. for language learning), the
+  second independent of the first.
+- **A subtitle style override (accessibility)** — force a font, size, and colour over the file's
+  own ASS styling, for readability. Off by default, and honest that it overrides the author's
+  intent; applies to text subtitles only.
+- **Opt-in OpenSubtitles fetch** — search by title and language and download a subtitle over TLS,
+  **off unless you turn it on** and supply your own free API key. Only the title and languages you
+  search leave the machine; your account password is never stored (it is exchanged for a
+  short-lived session token). Downloaded files go through the same bounded, untrusted loader as
+  local ones.
+
 ## [0.20.0] — 2026-07-23
 
 ### Added — Phase 1: core playback UI

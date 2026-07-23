@@ -98,3 +98,57 @@ bug-copy = रिपोर्ट कॉपी करें
 bug-copied = कॉपी हो गई
 bug-dismiss-crash = क्रैश को खारिज करें
 bug-copy-failed = रिपोर्ट क्लिपबोर्ड पर कॉपी नहीं हो सकी।
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = ऑडियो
+audio-tracks = ऑडियो ट्रैक
+audio-track-n = ट्रैक { $n }
+
+subtitle-menu = उपशीर्षक
+subtitle-tracks = उपशीर्षक ट्रैक
+subtitle-off = बंद
+subtitle-track-n = ट्रैक { $n }
+subtitle-external = बाहरी
+subtitle-image-based = छवि
+subtitle-load-file = उपशीर्षक फ़ाइल लोड करें…
+subtitle-visible = उपशीर्षक दिखाएँ
+subtitle-secondary = दूसरा उपशीर्षक
+subtitle-adjust = समय और स्थिति
+subtitle-delay = विलंब
+subtitle-position = स्थिति
+subtitle-scale = आकार
+subtitle-reset = रीसेट करें
+unit-seconds-short = से
+
+subtitle-loaded = उपशीर्षक लोड हुआ।
+subtitle-loaded-encoding = लोड हुआ, { $encoding } से रूपांतरित।
+subtitle-loaded-image = छवि-आधारित उपशीर्षक लोड हुआ — शैली लागू नहीं होती।
+
+subtitle-online = ऑनलाइन उपशीर्षक
+subtitle-online-disabled = खोजने के लिए सेटिंग्स में ऑनलाइन उपशीर्षक चालू करें।
+subtitle-online-query = खोजने के लिए शीर्षक
+subtitle-online-languages = भाषाएँ
+subtitle-online-search = खोजें
+subtitle-online-username = उपयोगकर्ता नाम
+subtitle-online-password = पासवर्ड
+subtitle-online-signin = साइन इन करें
+
+settings-subtitles = उपशीर्षक
+
+settings-sub-style-title = उपशीर्षक शैली
+settings-sub-style-hint = पठनीयता के लिए उपशीर्षक का रूप तय करें।
+settings-sub-style-enable = उपशीर्षक शैली अधिरोहित करें
+settings-sub-style-enable-hint = फ़ाइल की अपनी शैली के बजाय आपका फ़ॉन्ट, आकार और रंग उपयोग करता है। केवल टेक्स्ट उपशीर्षकों पर लागू।
+settings-sub-style-font = फ़ॉन्ट
+settings-sub-style-size = आकार
+settings-sub-style-color = रंग
+
+settings-online-title = ऑनलाइन उपशीर्षक
+settings-online-hint = OpenSubtitles से उपशीर्षक प्राप्त करें। डिफ़ॉल्ट रूप से बंद।
+settings-online-enable = ऑनलाइन उपशीर्षक खोज सक्षम करें
+settings-online-enable-hint = वैकल्पिक। आपके अपने निःशुल्क OpenSubtitles खाते और API कुंजी की आवश्यकता है।
+settings-online-key = API कुंजी
+settings-online-username = उपयोगकर्ता नाम
+settings-online-privacy = केवल आपके द्वारा खोजे गए शीर्षक और भाषाएँ भेजी जाती हैं। आपका पासवर्ड कभी संग्रहीत नहीं होता।

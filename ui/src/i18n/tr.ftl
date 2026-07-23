@@ -98,3 +98,57 @@ bug-copy = Raporu kopyala
 bug-copied = Kopyalandı
 bug-dismiss-crash = Çökmeyi yoksay
 bug-copy-failed = Rapor panoya kopyalanamadı.
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = Ses
+audio-tracks = Ses parçaları
+audio-track-n = Parça { $n }
+
+subtitle-menu = Altyazılar
+subtitle-tracks = Altyazı parçası
+subtitle-off = Kapalı
+subtitle-track-n = Parça { $n }
+subtitle-external = harici
+subtitle-image-based = görüntü
+subtitle-load-file = Altyazı dosyası yükle…
+subtitle-visible = Altyazıları göster
+subtitle-secondary = İkinci altyazı
+subtitle-adjust = Zamanlama ve konum
+subtitle-delay = Gecikme
+subtitle-position = Konum
+subtitle-scale = Boyut
+subtitle-reset = Sıfırla
+unit-seconds-short = sn
+
+subtitle-loaded = Altyazı yüklendi.
+subtitle-loaded-encoding = Yüklendi, { $encoding } biçiminden dönüştürüldü.
+subtitle-loaded-image = Görüntü tabanlı altyazı yüklendi — stil uygulanmaz.
+
+subtitle-online = Çevrimiçi altyazılar
+subtitle-online-disabled = Aramak için Ayarlar'dan çevrimiçi altyazıları açın.
+subtitle-online-query = Aranacak başlık
+subtitle-online-languages = Diller
+subtitle-online-search = Ara
+subtitle-online-username = Kullanıcı adı
+subtitle-online-password = Parola
+subtitle-online-signin = Oturum aç
+
+settings-subtitles = Altyazılar
+
+settings-sub-style-title = Altyazı stili
+settings-sub-style-hint = Okunabilirlik için altyazıların görünümünü zorla.
+settings-sub-style-enable = Altyazı stilini geçersiz kıl
+settings-sub-style-enable-hint = Dosyanın kendi stili yerine seçtiğin yazı tipi, boyut ve rengi kullanır. Yalnızca metin altyazılara uygulanır.
+settings-sub-style-font = Yazı tipi
+settings-sub-style-size = Boyut
+settings-sub-style-color = Renk
+
+settings-online-title = Çevrimiçi altyazılar
+settings-online-hint = OpenSubtitles'tan altyazı getir. Varsayılan olarak kapalı.
+settings-online-enable = Çevrimiçi altyazı getirmeyi etkinleştir
+settings-online-enable-hint = İsteğe bağlı. Kendi ücretsiz OpenSubtitles hesabını ve API anahtarını gerektirir.
+settings-online-key = API anahtarı
+settings-online-username = Kullanıcı adı
+settings-online-privacy = Yalnızca aradığın başlık ve diller gönderilir. Parolan asla saklanmaz.

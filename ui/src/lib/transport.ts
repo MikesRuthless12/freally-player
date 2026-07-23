@@ -2,6 +2,10 @@ import { open as openFileDialog, save as saveFileDialog } from "@tauri-apps/plug
 import { useMemo } from "react";
 
 import * as cmd from "../ipc/commands";
+import type { LoadedSubtitleInfo } from "../ipc/types";
+
+/** Subtitle file extensions offered by the "load subtitle" picker. */
+const SUBTITLE_EXTENSIONS = ["srt", "ass", "ssa", "vtt", "sub", "idx", "sup", "txt"];
 
 /**
  * The transport actions the player chrome drives, each wrapping an audited Rust command and
@@ -22,6 +26,20 @@ export interface Transport {
   seekChapter: (index: number) => void;
   /** Save a snapshot of the current frame via the native save dialog. */
   snapshot: (withSubs: boolean) => void;
+  // --- Subtitles & audio tracks ---
+  setAudioTrack: (id: number | null) => void;
+  setSubtitleTrack: (id: number | null) => void;
+  setSecondarySubtitleTrack: (id: number | null) => void;
+  setSubtitleVisible: (visible: boolean) => void;
+  setSubtitleDelay: (secs: number) => void;
+  setSubtitlePos: (pos: number) => void;
+  setSubtitleScale: (scale: number) => void;
+  /**
+   * Pick and load an external subtitle file via the native picker. Resolves to what was loaded
+   * (so the caller can show an honest "loaded as Windows-1251" note), or `null` when the picker
+   * was cancelled or the load failed (the error is routed to the sink either way).
+   */
+  addSubtitleFile: () => Promise<LoadedSubtitleInfo | null>;
 }
 
 /**
@@ -67,6 +85,28 @@ export function useTransport(onError: (message: string | null) => void): Transpo
           await cmd.captureFrame(path, withSubs);
         } catch (error) {
           fail(error);
+        }
+      },
+      setAudioTrack: (id) => run(cmd.setAudioTrack(id)),
+      setSubtitleTrack: (id) => run(cmd.setSubtitleTrack(id)),
+      setSecondarySubtitleTrack: (id) => run(cmd.setSecondarySubtitleTrack(id)),
+      setSubtitleVisible: (visible) => run(cmd.setSubtitleVisible(visible)),
+      setSubtitleDelay: (secs) => run(cmd.setSubtitleDelay(secs)),
+      setSubtitlePos: (pos) => run(cmd.setSubtitlePos(pos)),
+      setSubtitleScale: (scale) => run(cmd.setSubtitleScale(scale)),
+      addSubtitleFile: async () => {
+        onError(null);
+        try {
+          const picked = await openFileDialog({
+            multiple: false,
+            directory: false,
+            filters: [{ name: "Subtitles", extensions: SUBTITLE_EXTENSIONS }],
+          });
+          if (typeof picked !== "string") return null;
+          return await cmd.addSubtitleFile(picked);
+        } catch (error) {
+          fail(error);
+          return null;
         }
       },
     };

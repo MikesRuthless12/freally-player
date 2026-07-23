@@ -44,6 +44,8 @@ const IDLE: PlaybackState = {
   speed: 1,
   bufferedSecs: 0,
   abLoop: { a: null, b: null },
+  audioId: null,
+  subtitle: { id: null, secondaryId: null, visible: true, delaySecs: 0, pos: 100, scale: 1 },
 };
 
 /** A playing snapshot for `title`, resuming the shared idle defaults. */
@@ -52,7 +54,7 @@ function playing(title: string, positionSecs: number, durationSecs: number | nul
     ...IDLE,
     status: "playing",
     positionSecs,
-    media: { path: `C:/v/${title}.mkv`, title, durationSecs, chapters: [] },
+    media: { path: `C:/v/${title}.mkv`, title, durationSecs, chapters: [], tracks: [] },
   };
 }
 
@@ -60,7 +62,13 @@ function playing(title: string, positionSecs: number, durationSecs: number | nul
 function backend(overrides: Record<string, unknown> = {}) {
   const responses: Record<string, unknown> = {
     app_info: { name: "Freally Player", version: "0.1.0" },
-    settings_get: { theme: "dark", minimizeToTray: false, language: null },
+    settings_get: {
+      theme: "dark",
+      minimizeToTray: false,
+      subtitleStyle: { enabled: false, font: null, fontSize: null, color: null },
+      openSubtitles: { enabled: false, apiKey: null, username: null },
+      language: null,
+    },
     settings_set: undefined,
     eula_status: { version: "2026-07-01", text: "# EULA\n\nTerms.", accepted: true },
     eula_accept: undefined,
@@ -200,7 +208,13 @@ describe("App", () => {
 
       expect(document.documentElement.getAttribute("data-theme")).toBe("light");
       expect(invoke).toHaveBeenCalledWith("settings_set", {
-        settings: { theme: "light", minimizeToTray: false, language: null },
+        settings: {
+          theme: "light",
+          minimizeToTray: false,
+          subtitleStyle: { enabled: false, font: null, fontSize: null, color: null },
+          openSubtitles: { enabled: false, apiKey: null, username: null },
+          language: null,
+        },
       });
 
       await userEvent.click(await screen.findByRole("button", { name: "Switch to dark mode" }));
@@ -322,7 +336,13 @@ describe("App", () => {
       await userEvent.click(screen.getByRole("checkbox", { name: /Minimize to system tray/ }));
 
       expect(invoke).toHaveBeenCalledWith("settings_set", {
-        settings: { theme: "dark", minimizeToTray: true, language: null },
+        settings: {
+          theme: "dark",
+          minimizeToTray: true,
+          subtitleStyle: { enabled: false, font: null, fontSize: null, color: null },
+          openSubtitles: { enabled: false, apiKey: null, username: null },
+          language: null,
+        },
       });
     });
 
@@ -377,7 +397,13 @@ describe("App", () => {
       await userEvent.click(screen.getByRole("button", { name: "日本語" }));
 
       expect(invoke).toHaveBeenCalledWith("settings_set", {
-        settings: { theme: "dark", minimizeToTray: false, language: "ja" },
+        settings: {
+          theme: "dark",
+          minimizeToTray: false,
+          subtitleStyle: { enabled: false, font: null, fontSize: null, color: null },
+          openSubtitles: { enabled: false, apiKey: null, username: null },
+          language: "ja",
+        },
       });
       // Actually in Japanese, in the same session — no reload, no restart. The idle screen's
       // Open button behind the modal switches with the rest of the shell.
