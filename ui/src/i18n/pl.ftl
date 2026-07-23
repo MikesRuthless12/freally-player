@@ -98,3 +98,57 @@ bug-copy = Kopiuj raport
 bug-copied = Skopiowano
 bug-dismiss-crash = Odrzuć awarię
 bug-copy-failed = Nie udało się skopiować raportu do schowka.
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = Dźwięk
+audio-tracks = Ścieżki dźwiękowe
+audio-track-n = Ścieżka { $n }
+
+subtitle-menu = Napisy
+subtitle-tracks = Ścieżka napisów
+subtitle-off = Wyłączone
+subtitle-track-n = Ścieżka { $n }
+subtitle-external = zewnętrzne
+subtitle-image-based = obraz
+subtitle-load-file = Wczytaj plik napisów…
+subtitle-visible = Pokaż napisy
+subtitle-secondary = Drugie napisy
+subtitle-adjust = Synchronizacja i położenie
+subtitle-delay = Opóźnienie
+subtitle-position = Położenie
+subtitle-scale = Rozmiar
+subtitle-reset = Resetuj
+unit-seconds-short = s
+
+subtitle-loaded = Wczytano napisy.
+subtitle-loaded-encoding = Wczytano, przekonwertowano z { $encoding }.
+subtitle-loaded-image = Wczytano napisy obrazkowe — styl nie ma zastosowania.
+
+subtitle-online = Napisy online
+subtitle-online-disabled = Włącz napisy online w Ustawieniach, aby wyszukiwać.
+subtitle-online-query = Tytuł do wyszukania
+subtitle-online-languages = Języki
+subtitle-online-search = Szukaj
+subtitle-online-username = Nazwa użytkownika
+subtitle-online-password = Hasło
+subtitle-online-signin = Zaloguj się
+
+settings-subtitles = Napisy
+
+settings-sub-style-title = Styl napisów
+settings-sub-style-hint = Wymuś wygląd napisów dla lepszej czytelności.
+settings-sub-style-enable = Zastąp styl napisów
+settings-sub-style-enable-hint = Używa Twojej czcionki, rozmiaru i koloru zamiast stylu pliku. Dotyczy tylko napisów tekstowych.
+settings-sub-style-font = Czcionka
+settings-sub-style-size = Rozmiar
+settings-sub-style-color = Kolor
+
+settings-online-title = Napisy online
+settings-online-hint = Pobieraj napisy z OpenSubtitles. Domyślnie wyłączone.
+settings-online-enable = Włącz pobieranie napisów online
+settings-online-enable-hint = Opcjonalne. Wymaga własnego bezpłatnego konta OpenSubtitles i klucza API.
+settings-online-key = Klucz API
+settings-online-username = Nazwa użytkownika
+settings-online-privacy = Wysyłane są tylko wyszukiwany tytuł i języki. Twoje hasło nigdy nie jest zapisywane.

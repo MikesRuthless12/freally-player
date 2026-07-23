@@ -3,8 +3,8 @@ import { createPortal } from "react-dom";
 
 import { useT } from "../i18n";
 import { LOCALES } from "../i18n/locales";
-import { settingsSet } from "../ipc/commands";
-import type { AppInfo, Theme, UserSettings } from "../ipc/types";
+import { setSubtitleStyleOverride, settingsSet } from "../ipc/commands";
+import type { AppInfo, SubStyleOverride, Theme, UserSettings } from "../ipc/types";
 
 /**
  * The Settings modal, in the same shape as Freally Capture's: a fixed-size two-pane shell
@@ -17,7 +17,7 @@ import type { AppInfo, Theme, UserSettings } from "../ipc/types";
  *
  * Every control here is a REAL setting that persists — nothing decorative.
  */
-const CATEGORIES = ["general", "appearance", "language", "about"] as const;
+const CATEGORIES = ["general", "appearance", "subtitles", "language", "about"] as const;
 export type CategoryId = (typeof CATEGORIES)[number];
 
 export function SettingsModal({
@@ -76,6 +76,14 @@ export function SettingsModal({
     setError(null);
     onChange(next);
     settingsSet(next).catch((err) => setError(String(err)));
+  };
+
+  // The subtitle style override goes through its own command so it also applies to the engine
+  // live (not only on the next file open), while still persisting.
+  const applyStyle = (style: SubStyleOverride) => {
+    setError(null);
+    onChange({ ...settings, subtitleStyle: style });
+    setSubtitleStyleOverride(style).catch((err) => setError(String(err)));
   };
 
   return createPortal(
@@ -157,6 +165,119 @@ export function SettingsModal({
               </Section>
             )}
 
+            {category === "subtitles" && (
+              <div className="flex flex-col gap-5">
+                <Section title={t("settings-sub-style-title")} hint={t("settings-sub-style-hint")}>
+                  <Toggle
+                    label={t("settings-sub-style-enable")}
+                    hint={t("settings-sub-style-enable-hint")}
+                    checked={settings.subtitleStyle.enabled}
+                    onChange={(enabled) => applyStyle({ ...settings.subtitleStyle, enabled })}
+                  />
+                  {settings.subtitleStyle.enabled && (
+                    <div className="flex flex-col gap-2">
+                      <Field label={t("settings-sub-style-font")}>
+                        <input
+                          type="text"
+                          value={settings.subtitleStyle.font ?? ""}
+                          placeholder="sans-serif"
+                          onChange={(e) =>
+                            applyStyle({
+                              ...settings.subtitleStyle,
+                              font: e.target.value.trim() || null,
+                            })
+                          }
+                          className="w-48 rounded-md border border-havoc-border bg-havoc-surface px-2 py-1 text-xs text-havoc-text"
+                        />
+                      </Field>
+                      <Field label={t("settings-sub-style-size")}>
+                        <input
+                          type="number"
+                          min={10}
+                          max={200}
+                          value={settings.subtitleStyle.fontSize ?? ""}
+                          placeholder="55"
+                          onChange={(e) =>
+                            applyStyle({
+                              ...settings.subtitleStyle,
+                              fontSize: e.target.value === "" ? null : Number(e.target.value),
+                            })
+                          }
+                          className="w-24 rounded-md border border-havoc-border bg-havoc-surface px-2 py-1 text-xs text-havoc-text"
+                          dir="ltr"
+                        />
+                      </Field>
+                      <Field label={t("settings-sub-style-color")}>
+                        <input
+                          type="color"
+                          value={settings.subtitleStyle.color ?? "#ffffff"}
+                          onChange={(e) =>
+                            applyStyle({ ...settings.subtitleStyle, color: e.target.value })
+                          }
+                          className="h-7 w-12 cursor-pointer rounded-md border border-havoc-border bg-havoc-surface"
+                        />
+                      </Field>
+                    </div>
+                  )}
+                </Section>
+
+                <Section title={t("settings-online-title")} hint={t("settings-online-hint")}>
+                  <Toggle
+                    label={t("settings-online-enable")}
+                    hint={t("settings-online-enable-hint")}
+                    checked={settings.openSubtitles.enabled}
+                    onChange={(enabled) =>
+                      apply({
+                        ...settings,
+                        openSubtitles: { ...settings.openSubtitles, enabled },
+                      })
+                    }
+                  />
+                  {settings.openSubtitles.enabled && (
+                    <div className="flex flex-col gap-2">
+                      <Field label={t("settings-online-key")}>
+                        <input
+                          type="password"
+                          value={settings.openSubtitles.apiKey ?? ""}
+                          onChange={(e) =>
+                            apply({
+                              ...settings,
+                              openSubtitles: {
+                                ...settings.openSubtitles,
+                                apiKey: e.target.value || null,
+                              },
+                            })
+                          }
+                          className="w-56 rounded-md border border-havoc-border bg-havoc-surface px-2 py-1 text-xs text-havoc-text"
+                          dir="ltr"
+                        />
+                      </Field>
+                      <Field label={t("settings-online-username")}>
+                        <input
+                          type="text"
+                          value={settings.openSubtitles.username ?? ""}
+                          onChange={(e) =>
+                            apply({
+                              ...settings,
+                              openSubtitles: {
+                                ...settings.openSubtitles,
+                                username: e.target.value || null,
+                              },
+                            })
+                          }
+                          className="w-56 rounded-md border border-havoc-border bg-havoc-surface px-2 py-1 text-xs text-havoc-text"
+                          dir="ltr"
+                        />
+                      </Field>
+                      <p className="m-0 text-[11px] text-havoc-muted">
+                        {t("settings-online-privacy")}
+                      </p>
+                    </div>
+                  )}
+                </Section>
+              </div>
+            )}
+
             {category === "language" && (
               <Section title={t("settings-language-title")} hint={t("settings-language-hint")}>
                 <div className="grid grid-cols-3 gap-1.5">
@@ -229,6 +350,15 @@ function Section({
       </div>
       {children}
     </section>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex items-center gap-3">
+      <span className="w-28 shrink-0 text-xs text-havoc-muted">{label}</span>
+      {children}
+    </label>
   );
 }
 

@@ -98,3 +98,57 @@ bug-copy = レポートをコピー
 bug-copied = コピーしました
 bug-dismiss-crash = クラッシュを破棄
 bug-copy-failed = レポートをクリップボードにコピーできませんでした。
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = 音声
+audio-tracks = 音声トラック
+audio-track-n = トラック { $n }
+
+subtitle-menu = 字幕
+subtitle-tracks = 字幕トラック
+subtitle-off = オフ
+subtitle-track-n = トラック { $n }
+subtitle-external = 外部
+subtitle-image-based = 画像
+subtitle-load-file = 字幕ファイルを読み込む…
+subtitle-visible = 字幕を表示
+subtitle-secondary = 2つ目の字幕
+subtitle-adjust = タイミングと位置
+subtitle-delay = 遅延
+subtitle-position = 位置
+subtitle-scale = サイズ
+subtitle-reset = リセット
+unit-seconds-short = 秒
+
+subtitle-loaded = 字幕を読み込みました。
+subtitle-loaded-encoding = { $encoding } から変換して読み込みました。
+subtitle-loaded-image = 画像ベースの字幕を読み込みました — スタイルは適用されません。
+
+subtitle-online = オンライン字幕
+subtitle-online-disabled = 検索するには設定でオンライン字幕を有効にしてください。
+subtitle-online-query = 検索するタイトル
+subtitle-online-languages = 言語
+subtitle-online-search = 検索
+subtitle-online-username = ユーザー名
+subtitle-online-password = パスワード
+subtitle-online-signin = サインイン
+
+settings-subtitles = 字幕
+
+settings-sub-style-title = 字幕スタイル
+settings-sub-style-hint = 読みやすさのため、字幕の見た目を強制します。
+settings-sub-style-enable = 字幕スタイルを上書き
+settings-sub-style-enable-hint = ファイル本来のスタイルではなく、指定したフォント・サイズ・色を使います。テキスト字幕にのみ適用されます。
+settings-sub-style-font = フォント
+settings-sub-style-size = サイズ
+settings-sub-style-color = 色
+
+settings-online-title = オンライン字幕
+settings-online-hint = OpenSubtitles から字幕を取得します。既定ではオフです。
+settings-online-enable = オンライン字幕の取得を有効にする
+settings-online-enable-hint = オプトイン。ご自身の無料の OpenSubtitles アカウントと API キーが必要です。
+settings-online-key = API キー
+settings-online-username = ユーザー名
+settings-online-privacy = 検索したタイトルと言語のみが送信されます。パスワードは保存されません。

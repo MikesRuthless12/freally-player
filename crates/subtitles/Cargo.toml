@@ -1,5 +1,7 @@
-# freally-subtitles — owned subtitle pipeline: parse, sync, manage around the engine's renderer.
-# Online fetch (OpenSubtitles) is opt-in; subtitle files are untrusted input.
+# freally-subtitles — owned subtitle pipeline: parse, sync, and manage around the engine's
+# renderer. The engine (libass) does the RENDERING; this crate owns the untrusted bits it should
+# not be handed raw — bounded loading + encoding auto-detect of external files, per-file sync/
+# placement preferences, and the opt-in OpenSubtitles fetch. Subtitle files are untrusted input.
 [package]
 name = "freally-subtitles"
 version.workspace = true
@@ -12,3 +14,19 @@ license.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 log.workspace = true
+
+# Encoding auto-detect for external text subtitles (SRT/ASS/SSA/WebVTT/MicroDVD). `chardetng`
+# is the pure-Rust port of Firefox's detector; `encoding_rs` transcodes the guessed charset to
+# the UTF-8 we hand libass, so a Windows-1251 or Shift-JIS file is not rendered as mojibake.
+chardetng = "0.1"
+encoding_rs = "0.8"
+
+# Opt-in OpenSubtitles fetch over TLS. Tauri already pulls reqwest with the rustls stack, so we
+# align to `rustls` (its platform verifier handles the cert roots — no system OpenSSL) and unify
+# onto that one copy rather than dragging in a second TLS backend. `blocking` matches the
+# synchronous Tauri command style; `query` is needed for the search query string. Kept lean: no
+# http2/proxy/charset.
+[dependencies.reqwest]
+version = "0.13"
+default-features = false
+features = ["rustls", "blocking", "json", "query"]

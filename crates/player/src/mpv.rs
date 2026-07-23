@@ -20,8 +20,9 @@ use libmpv2::Mpv;
 
 use crate::surface::{self, VideoSurface};
 use crate::{
-    clamp_speed, clamp_volume, is_seekable_position, title_for, AbLoop, Chapter, Engine,
-    EngineError, HostWindow, MediaInfo, OpenOptions, PlaybackState, Status,
+    clamp_speed, clamp_sub_delay, clamp_sub_pos, clamp_sub_scale, clamp_volume,
+    is_seekable_position, title_for, AbLoop, Chapter, Engine, EngineError, HostWindow, MediaInfo,
+    OpenOptions, PlaybackState, Status, SubStyleOverride, SubtitleState, Track, TrackKind,
 };
 
 /// Playback driven by libmpv.
@@ -88,6 +89,67 @@ impl MpvEngine {
             })
             .collect()
     }
+
+    /// A non-empty string property, or `None` when absent or blank.
+    fn property_string(&self, name: &str) -> Option<String> {
+        self.mpv
+            .get_property::<String>(name)
+            .ok()
+            .filter(|s| !s.is_empty())
+    }
+
+    /// The audio/subtitle/video tracks mpv currently exposes, including externally added
+    /// subtitles. Empty until the demuxer has read the header.
+    ///
+    /// mpv numbers tracks per kind, and that per-kind number is exactly the `aid`/`sid` a
+    /// caller selects with — so it is what we report as the track id.
+    fn tracks(&self) -> Vec<Track> {
+        let count = self.property_i64("track-list/count").unwrap_or(0).max(0) as usize;
+        (0..count)
+            .filter_map(|i| {
+                let kind = match self
+                    .property_string(&format!("track-list/{i}/type"))?
+                    .as_str()
+                {
+                    "audio" => TrackKind::Audio,
+                    "sub" => TrackKind::Sub,
+                    "video" => TrackKind::Video,
+                    // Attachments (fonts, cover art) are tracks to mpv but not selectable
+                    // streams — drop anything we do not offer a choice over.
+                    _ => return None,
+                };
+                let id = self.property_i64(&format!("track-list/{i}/id"))?;
+                Some(Track {
+                    id,
+                    kind,
+                    lang: self.property_string(&format!("track-list/{i}/lang")),
+                    title: self.property_string(&format!("track-list/{i}/title")),
+                    default: self
+                        .property_bool(&format!("track-list/{i}/default"))
+                        .unwrap_or(false),
+                    external: self
+                        .property_bool(&format!("track-list/{i}/external"))
+                        .unwrap_or(false),
+                    image_based: matches!(kind, TrackKind::Sub)
+                        && is_image_subtitle(
+                            self.property_string(&format!("track-list/{i}/codec"))
+                                .as_deref(),
+                        ),
+                })
+            })
+            .collect()
+    }
+
+    /// Select a per-kind track: a concrete id, or mpv's "no" to turn the kind off.
+    fn select_track(&mut self, property: &str, id: Option<i64>) -> Result<(), EngineError> {
+        if self.media.is_none() {
+            return Err(EngineError::NothingOpen);
+        }
+        match id {
+            Some(id) => self.mpv.set_property(property, id).map_err(backend_error),
+            None => self.mpv.set_property(property, "no").map_err(backend_error),
+        }
+    }
 }
 
 impl Engine for MpvEngine {
@@ -112,6 +174,7 @@ impl Engine for MpvEngine {
             title: title_for(path),
             duration_secs: self.property_f64("duration"),
             chapters: self.chapters(),
+            tracks: self.tracks(),
         };
         self.media = Some(media.clone());
         Ok(media)
@@ -215,6 +278,125 @@ impl Engine for MpvEngine {
             .map_err(backend_error)
     }
 
+    fn tracks(&self) -> Vec<Track> {
+        if self.media.is_none() {
+            return Vec::new();
+        }
+        MpvEngine::tracks(self)
+    }
+
+    fn set_audio_track(&mut self, id: Option<i64>) -> Result<(), EngineError> {
+        self.select_track("aid", id)
+    }
+
+    fn set_sub_track(&mut self, id: Option<i64>) -> Result<(), EngineError> {
+        self.select_track("sid", id)
+    }
+
+    fn set_secondary_sub_track(&mut self, id: Option<i64>) -> Result<(), EngineError> {
+        self.select_track("secondary-sid", id)
+    }
+
+    fn add_sub_file(&mut self, path: &str, select: bool) -> Result<i64, EngineError> {
+        if self.media.is_none() {
+            return Err(EngineError::NothingOpen);
+        }
+        // "select" makes it the primary track now; "auto" adds it without switching. Either
+        // way mpv appends it, so the new track is the highest sub id afterward.
+        let flag = if select { "select" } else { "auto" };
+        self.mpv
+            .command("sub-add", &[path, flag])
+            .map_err(backend_error)?;
+        // Refresh the cached track list so `state()` reflects the new track without having to
+        // rebuild the whole list every tick, and read the new sub id off that one read.
+        let tracks = MpvEngine::tracks(self);
+        let new_id = tracks
+            .iter()
+            .filter(|t| t.kind == TrackKind::Sub)
+            .map(|t| t.id)
+            .max();
+        if let Some(media) = self.media.as_mut() {
+            media.tracks = tracks;
+        }
+        new_id.ok_or_else(|| {
+            EngineError::Backend("the subtitle file loaded but no track appeared".to_owned())
+        })
+    }
+
+    fn set_sub_visible(&mut self, visible: bool) -> Result<(), EngineError> {
+        if self.media.is_none() {
+            return Err(EngineError::NothingOpen);
+        }
+        self.mpv
+            .set_property("sub-visibility", visible)
+            .map_err(backend_error)
+    }
+
+    fn set_sub_delay(&mut self, secs: f64) -> Result<(), EngineError> {
+        if self.media.is_none() {
+            return Err(EngineError::NothingOpen);
+        }
+        self.mpv
+            .set_property("sub-delay", clamp_sub_delay(secs))
+            .map_err(backend_error)
+    }
+
+    fn set_sub_pos(&mut self, pos: i64) -> Result<(), EngineError> {
+        if self.media.is_none() {
+            return Err(EngineError::NothingOpen);
+        }
+        self.mpv
+            .set_property("sub-pos", clamp_sub_pos(pos))
+            .map_err(backend_error)
+    }
+
+    fn set_sub_scale(&mut self, scale: f64) -> Result<(), EngineError> {
+        if self.media.is_none() {
+            return Err(EngineError::NothingOpen);
+        }
+        self.mpv
+            .set_property("sub-scale", clamp_sub_scale(scale))
+            .map_err(backend_error)
+    }
+
+    fn set_sub_style_override(&mut self, style: &SubStyleOverride) -> Result<(), EngineError> {
+        if self.media.is_none() {
+            return Err(EngineError::NothingOpen);
+        }
+        // "force" makes mpv's own sub-font/size/color win over the file's ASS styling; "yes"
+        // (mpv's default) respects the author. Turning the override off restores the default
+        // look so a forced font never lingers — so both branches set the same four properties,
+        // just with different values.
+        let (mode, font, size, color) = if style.enabled {
+            (
+                "force",
+                style.font.as_deref().unwrap_or(DEFAULT_SUB_FONT),
+                style.font_size.unwrap_or(DEFAULT_SUB_FONT_SIZE),
+                style.color.as_deref().unwrap_or(DEFAULT_SUB_COLOR),
+            )
+        } else {
+            (
+                "yes",
+                DEFAULT_SUB_FONT,
+                DEFAULT_SUB_FONT_SIZE,
+                DEFAULT_SUB_COLOR,
+            )
+        };
+        self.mpv
+            .set_property("sub-ass-override", mode)
+            .map_err(backend_error)?;
+        self.mpv
+            .set_property("sub-font", font)
+            .map_err(backend_error)?;
+        self.mpv
+            .set_property("sub-font-size", size)
+            .map_err(backend_error)?;
+        self.mpv
+            .set_property("sub-color", color)
+            .map_err(backend_error)?;
+        Ok(())
+    }
+
     fn attach_surface(
         &mut self,
         host: HostWindow,
@@ -248,13 +430,21 @@ impl Engine for MpvEngine {
             status,
             position_secs: self.property_f64("time-pos").unwrap_or(0.0),
             media: self.media.clone().map(|mut media| {
-                // Duration and chapters usually only become known after the header is parsed,
-                // so refresh anything still missing from the open() snapshot.
+                // Duration, chapters and tracks usually only become known after the header is
+                // parsed, so refresh anything still missing from the open() snapshot.
                 if media.duration_secs.is_none() {
                     media.duration_secs = self.property_f64("duration");
                 }
                 if media.chapters.is_empty() {
                     media.chapters = self.chapters();
+                }
+                // Tracks are cached in `self.media` (set on open, refreshed by add_sub_file), so
+                // rebuild the full list — several property reads per track — only when the count
+                // changed, catching a track that appears once the header is fully parsed, rather
+                // than on every ~4×/second tick.
+                let live_count = self.property_i64("track-list/count").unwrap_or(0).max(0) as usize;
+                if live_count != media.tracks.len() {
+                    media.tracks = MpvEngine::tracks(self);
                 }
                 media
             }),
@@ -266,12 +456,50 @@ impl Engine for MpvEngine {
                 a: self.property_f64("ab-loop-a"),
                 b: self.property_f64("ab-loop-b"),
             },
+            // `aid`/`sid` read back as "no"/"auto" (not an i64) when not a concrete track, so a
+            // disabled or not-yet-chosen track reads as None — exactly right for the menu.
+            audio_id: self.property_i64("aid"),
+            subtitle: SubtitleState {
+                id: self.property_i64("sid"),
+                secondary_id: self.property_i64("secondary-sid"),
+                visible: self.property_bool("sub-visibility").unwrap_or(true),
+                delay_secs: self.property_f64("sub-delay").unwrap_or(0.0),
+                pos: self
+                    .property_i64("sub-pos")
+                    .unwrap_or(crate::SUB_POS_DEFAULT),
+                scale: self.property_f64("sub-scale").unwrap_or(1.0),
+            },
         }
     }
 }
 
 fn backend_error(err: libmpv2::Error) -> EngineError {
     EngineError::Backend(err.to_string())
+}
+
+/// mpv's default subtitle look, restored when the style override is turned off so a forced
+/// font/size/colour never lingers.
+const DEFAULT_SUB_FONT: &str = "sans-serif";
+const DEFAULT_SUB_FONT_SIZE: f64 = 55.0;
+const DEFAULT_SUB_COLOR: &str = "#FFFFFFFF";
+
+/// Is this subtitle codec image-based (a bitmap) rather than text? Style, font and colour
+/// overrides only apply to text subtitles, so the UI uses this to say so honestly rather than
+/// offering controls that would do nothing.
+fn is_image_subtitle(codec: Option<&str>) -> bool {
+    matches!(
+        codec,
+        Some(
+            "hdmv_pgs_subtitle"
+                | "pgssub"
+                | "dvd_subtitle"
+                | "dvdsub"
+                | "dvb_subtitle"
+                | "dvbsub"
+                | "dvb_teletext"
+                | "xsub"
+        )
+    )
 }
 
 /// Build mpv's per-file loadfile options string from resume/track choices, or `None` when
@@ -336,6 +564,43 @@ mod tests {
             engine.capture_frame("shot.png", false),
             Err(EngineError::NothingOpen)
         );
+        // The Phase 2 track/subtitle commands refuse the same way with nothing open.
+        assert_eq!(
+            engine.set_audio_track(Some(1)),
+            Err(EngineError::NothingOpen)
+        );
+        assert_eq!(engine.set_sub_track(Some(1)), Err(EngineError::NothingOpen));
+        assert_eq!(
+            engine.set_secondary_sub_track(Some(2)),
+            Err(EngineError::NothingOpen)
+        );
+        assert_eq!(
+            engine.add_sub_file("subs.srt", true),
+            Err(EngineError::NothingOpen)
+        );
+        assert_eq!(engine.set_sub_visible(false), Err(EngineError::NothingOpen));
+        assert_eq!(engine.set_sub_delay(1.0), Err(EngineError::NothingOpen));
+        assert_eq!(engine.set_sub_pos(90), Err(EngineError::NothingOpen));
+        assert_eq!(engine.set_sub_scale(1.5), Err(EngineError::NothingOpen));
+        assert_eq!(
+            engine.set_sub_style_override(&SubStyleOverride::default()),
+            Err(EngineError::NothingOpen)
+        );
+        // With nothing open there are no tracks to report.
+        assert!(Engine::tracks(&engine).is_empty());
+    }
+
+    #[test]
+    fn image_based_subtitle_codecs_are_recognised() {
+        // Bitmap subtitle formats — style/font/colour overrides do not apply to these.
+        assert!(is_image_subtitle(Some("hdmv_pgs_subtitle")));
+        assert!(is_image_subtitle(Some("dvd_subtitle")));
+        assert!(is_image_subtitle(Some("dvb_subtitle")));
+        // Text subtitles — overridable.
+        assert!(!is_image_subtitle(Some("subrip")));
+        assert!(!is_image_subtitle(Some("ass")));
+        assert!(!is_image_subtitle(Some("webvtt")));
+        assert!(!is_image_subtitle(None));
     }
 
     #[test]

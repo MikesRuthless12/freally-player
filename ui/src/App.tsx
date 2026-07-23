@@ -37,6 +37,17 @@ const IDLE: PlaybackState = {
   speed: 1,
   bufferedSecs: 0,
   abLoop: { a: null, b: null },
+  audioId: null,
+  subtitle: { id: null, secondaryId: null, visible: true, delaySecs: 0, pos: 100, scale: 1 },
+};
+
+/** The settings at rest, matching the Rust defaults — everything off / unset. */
+const DEFAULT_SETTINGS: UserSettings = {
+  theme: "dark",
+  minimizeToTray: false,
+  subtitleStyle: { enabled: false, font: null, fontSize: null, color: null },
+  openSubtitles: { enabled: false, apiKey: null, username: null },
+  language: null,
 };
 
 /**
@@ -48,11 +59,7 @@ export default function App() {
   const [info, setInfo] = useState<AppInfo | null>(null);
   const [infoError, setInfoError] = useState<string | null>(null);
   const [eula, setEula] = useState<EulaStatus | null>(null);
-  const [settings, setSettings] = useState<UserSettings>({
-    theme: "dark",
-    minimizeToTray: false,
-    language: null,
-  });
+  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [settingsCategory, setSettingsCategory] = useState<CategoryId | null>(null);
   const [showBugReport, setShowBugReport] = useState(false);
   const [playback, setPlayback] = useState<PlaybackState>(IDLE);

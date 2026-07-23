@@ -98,3 +98,57 @@ bug-copy = Sao chép báo cáo
 bug-copied = Đã sao chép
 bug-dismiss-crash = Bỏ qua sự cố
 bug-copy-failed = Không thể sao chép báo cáo vào bảng nhớ tạm.
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = Âm thanh
+audio-tracks = Bản âm thanh
+audio-track-n = Bản { $n }
+
+subtitle-menu = Phụ đề
+subtitle-tracks = Bản phụ đề
+subtitle-off = Tắt
+subtitle-track-n = Bản { $n }
+subtitle-external = bên ngoài
+subtitle-image-based = hình ảnh
+subtitle-load-file = Tải tệp phụ đề…
+subtitle-visible = Hiện phụ đề
+subtitle-secondary = Phụ đề thứ hai
+subtitle-adjust = Thời điểm và vị trí
+subtitle-delay = Độ trễ
+subtitle-position = Vị trí
+subtitle-scale = Cỡ
+subtitle-reset = Đặt lại
+unit-seconds-short = giây
+
+subtitle-loaded = Đã tải phụ đề.
+subtitle-loaded-encoding = Đã tải, chuyển đổi từ { $encoding }.
+subtitle-loaded-image = Đã tải phụ đề dạng ảnh — kiểu dáng không áp dụng.
+
+subtitle-online = Phụ đề trực tuyến
+subtitle-online-disabled = Bật phụ đề trực tuyến trong Cài đặt để tìm kiếm.
+subtitle-online-query = Tiêu đề cần tìm
+subtitle-online-languages = Ngôn ngữ
+subtitle-online-search = Tìm
+subtitle-online-username = Tên đăng nhập
+subtitle-online-password = Mật khẩu
+subtitle-online-signin = Đăng nhập
+
+settings-subtitles = Phụ đề
+
+settings-sub-style-title = Kiểu phụ đề
+settings-sub-style-hint = Buộc kiểu hiển thị phụ đề, để dễ đọc.
+settings-sub-style-enable = Ghi đè kiểu phụ đề
+settings-sub-style-enable-hint = Dùng phông chữ, cỡ và màu của bạn thay cho kiểu của tệp. Chỉ áp dụng cho phụ đề văn bản.
+settings-sub-style-font = Phông chữ
+settings-sub-style-size = Cỡ
+settings-sub-style-color = Màu
+
+settings-online-title = Phụ đề trực tuyến
+settings-online-hint = Lấy phụ đề từ OpenSubtitles. Mặc định tắt.
+settings-online-enable = Bật lấy phụ đề trực tuyến
+settings-online-enable-hint = Tùy chọn. Cần tài khoản OpenSubtitles miễn phí và khóa API của riêng bạn.
+settings-online-key = Khóa API
+settings-online-username = Tên đăng nhập
+settings-online-privacy = Chỉ tiêu đề và ngôn ngữ bạn tìm được gửi đi. Mật khẩu của bạn không bao giờ được lưu.

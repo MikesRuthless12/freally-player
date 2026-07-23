@@ -15,6 +15,9 @@ use freally_library::{RecentWatch, WatchState, WatchStore};
 use freally_player_core::{
     is_seekable_position, Engine, MediaInfo, NullEngine, OpenOptions, PlaybackState, Status,
 };
+use freally_subtitles::SubtitlePrefsStore;
+
+use crate::settings::SettingsStore;
 // Only the Windows surface host can be named yet — see `attach_surface`.
 #[cfg(windows)]
 use freally_player_core::HostWindow;
@@ -72,7 +75,7 @@ impl PlayerState {
         self.with(|engine| engine.current_tracks())
     }
 
-    fn with<R>(&self, f: impl FnOnce(&mut dyn Engine) -> R) -> R {
+    pub(crate) fn with<R>(&self, f: impl FnOnce(&mut dyn Engine) -> R) -> R {
         let mut guard = self
             .engine
             .lock()
@@ -208,18 +211,24 @@ pub fn open_media(
     app: AppHandle,
     player: State<'_, PlayerState>,
     watch: State<'_, WatchStore>,
+    subs: State<'_, SubtitlePrefsStore>,
+    settings: State<'_, SettingsStore>,
     path: String,
 ) -> Result<MediaInfo, String> {
     validate_target(&path)?;
 
-    // Save where the outgoing file was left before it is replaced, then resume the new one
-    // where it was last stopped — with the tracks that were playing.
+    // Save where the outgoing file was left, and its subtitle timing, before it is replaced;
+    // then resume the new one where it was last stopped — with the tracks that were playing.
     persist_watch_state(&player, &watch);
+    crate::commands::subtitles::persist_subtitle_prefs(&player, &subs);
     let options = resume_options(&watch, &path);
 
     let media = player
         .with(|engine| engine.open(&path, &options))
         .map_err(|err| err.to_string())?;
+
+    // Re-apply the global subtitle style override and this file's remembered timing/placement.
+    crate::commands::subtitles::apply_on_open(&player, &subs, &settings, &path);
 
     events::emit_media_opened(&app, &media);
     events::emit_state(&app, &player.with(|engine| engine.state()));

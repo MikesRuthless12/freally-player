@@ -22,10 +22,12 @@ mod settings;
 use std::path::PathBuf;
 
 use freally_library::WatchStore;
+use freally_subtitles::SubtitlePrefsStore;
 use serde::Serialize;
 use tauri::{Manager, PhysicalSize, State, WindowEvent};
 
 use commands::playback::PlayerState;
+use commands::subtitles::OpenSubtitlesState;
 use mediakeys::MediaKeys;
 use settings::{SettingsStore, UserSettings, WindowSettings};
 
@@ -131,6 +133,8 @@ pub fn run() {
         .manage(SettingsStore::load_default())
         .manage(PlayerState::new())
         .manage(load_watch_store())
+        .manage(load_subtitle_prefs_store())
+        .manage(OpenSubtitlesState::default())
         .invoke_handler(tauri::generate_handler![
             app_info,
             settings_get,
@@ -152,6 +156,18 @@ pub fn run() {
             commands::playback::set_chapter,
             commands::playback::capture_frame,
             commands::playback::recent_watch,
+            commands::subtitles::set_audio_track,
+            commands::subtitles::set_subtitle_track,
+            commands::subtitles::set_secondary_subtitle_track,
+            commands::subtitles::set_subtitle_visible,
+            commands::subtitles::set_subtitle_delay,
+            commands::subtitles::set_subtitle_pos,
+            commands::subtitles::set_subtitle_scale,
+            commands::subtitles::set_subtitle_style_override,
+            commands::subtitles::add_subtitle_file,
+            commands::subtitles::opensubtitles_search,
+            commands::subtitles::opensubtitles_login,
+            commands::subtitles::opensubtitles_download,
             bugreport::bug_report_context,
             bugreport::bug_report_submit,
             bugreport::bug_report_clear_crash,
@@ -179,10 +195,15 @@ pub fn run() {
             // reports through `set_video_rect` whenever its own layout changes.
             if matches!(event, WindowEvent::CloseRequested { .. }) {
                 save_window(window);
-                // Remember where the open file was left, so it reopens there next launch.
+                // Remember where the open file was left and its subtitle timing, so both reopen
+                // as the viewer left them next launch.
                 commands::playback::persist_watch_state(
                     &window.state::<PlayerState>(),
                     &window.state::<WatchStore>(),
+                );
+                commands::subtitles::persist_subtitle_prefs(
+                    &window.state::<PlayerState>(),
+                    &window.state::<SubtitlePrefsStore>(),
                 );
             }
             // "Minimize to system tray": hide the window entirely so it leaves the taskbar,
@@ -275,6 +296,10 @@ fn spawn_transport_ticker(app: &tauri::AppHandle) {
                         &app.state::<PlayerState>(),
                         &app.state::<WatchStore>(),
                     );
+                    commands::subtitles::persist_subtitle_prefs(
+                        &app.state::<PlayerState>(),
+                        &app.state::<SubtitlePrefsStore>(),
+                    );
                 }
             }
         })
@@ -290,6 +315,17 @@ fn load_watch_store() -> WatchStore {
         None => {
             log::warn!("no OS config directory available — resume points will not persist");
             WatchStore::load_from(PathBuf::from("watch_state.json"))
+        }
+    }
+}
+
+/// Load the per-file subtitle-preferences store, degrading the same way as the watch store.
+fn load_subtitle_prefs_store() -> SubtitlePrefsStore {
+    match paths::config_dir() {
+        Some(dir) => SubtitlePrefsStore::load_from(dir.join("subtitle_prefs.json")),
+        None => {
+            log::warn!("no OS config directory available — subtitle preferences will not persist");
+            SubtitlePrefsStore::load_from(PathBuf::from("subtitle_prefs.json"))
         }
     }
 }
@@ -346,7 +382,16 @@ fn open_media_from_args(app: &tauri::AppHandle, args: &[String]) {
     };
     let state = app.state::<PlayerState>();
     let watch = app.state::<WatchStore>();
-    match commands::playback::open_media(app.clone(), state.clone(), watch, target.to_owned()) {
+    let subs = app.state::<SubtitlePrefsStore>();
+    let settings = app.state::<SettingsStore>();
+    match commands::playback::open_media(
+        app.clone(),
+        state.clone(),
+        watch,
+        subs,
+        settings,
+        target.to_owned(),
+    ) {
         Ok(_) => {
             if let Err(err) = commands::playback::play(app.clone(), state) {
                 log::warn!("could not start playback of {target}: {err}");

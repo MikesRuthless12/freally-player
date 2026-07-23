@@ -49,6 +49,45 @@
             { title: "The meadow", startSecs: 120 },
             { title: "Finale", startSecs: 420 },
           ],
+          // Two audio and two subtitle tracks, so the audio/subtitle menus have real content.
+          tracks: [
+            {
+              id: 1,
+              kind: "audio",
+              lang: "en",
+              title: "Stereo",
+              default: true,
+              external: false,
+              imageBased: false,
+            },
+            {
+              id: 2,
+              kind: "audio",
+              lang: "ja",
+              title: null,
+              default: false,
+              external: false,
+              imageBased: false,
+            },
+            {
+              id: 1,
+              kind: "sub",
+              lang: "en",
+              title: "English",
+              default: true,
+              external: false,
+              imageBased: false,
+            },
+            {
+              id: 2,
+              kind: "sub",
+              lang: "es",
+              title: null,
+              default: false,
+              external: false,
+              imageBased: false,
+            },
+          ],
         }
       : null;
 
@@ -59,7 +98,21 @@
     speed: 1,
     bufferedSecs: media ? 596 : 0,
     abLoop: { a: null, b: null },
+    audioId: media ? 1 : null,
+    subtitle: {
+      id: media ? 1 : null,
+      secondaryId: null,
+      visible: true,
+      delaySecs: 0,
+      pos: 100,
+      scale: 1,
+    },
   };
+
+  // `?os=1` turns on the opt-in OpenSubtitles config so the online panel renders; `?substyle=1`
+  // turns on the subtitle style override so the Settings pane shows its font/size/colour fields.
+  const online = params.get("os") === "1";
+  const styleOn = params.get("substyle") === "1";
 
   // `?recent=1` seeds the idle screen's Continue-Watching row.
   const recent =
@@ -71,12 +124,23 @@
       : [];
 
   const RESP = {
-    app_info: { name: "Freally Player", version: "0.20.0" },
+    app_info: { name: "Freally Player", version: "0.30.0" },
     // `?lang=xx` starts in a stored locale; with none, the UI detects one from the browser
     // exactly as a first run detects it from the OS.
     settings_get: {
       theme,
       minimizeToTray: params.get("tray") === "1",
+      subtitleStyle: {
+        enabled: styleOn,
+        font: styleOn ? "Atkinson Hyperlegible" : null,
+        fontSize: styleOn ? 64 : null,
+        color: styleOn ? "#ffee00" : null,
+      },
+      openSubtitles: {
+        enabled: online,
+        apiKey: online ? "demo-api-key" : null,
+        username: online ? "cinephile" : null,
+      },
       language: params.get("lang"),
     },
     settings_set: null,
@@ -106,11 +170,41 @@
     set_chapter: null,
     capture_frame: null,
     recent_watch: recent,
+    // Phase 2 — subtitles & audio tracks.
+    set_audio_track: null,
+    set_subtitle_track: null,
+    set_secondary_subtitle_track: null,
+    set_subtitle_visible: null,
+    set_subtitle_delay: null,
+    set_subtitle_pos: null,
+    set_subtitle_scale: null,
+    set_subtitle_style_override: null,
+    add_subtitle_file: { trackId: 3, sourceEncoding: "windows-1251", imageBased: false },
+    opensubtitles_search: online
+      ? [
+          {
+            fileId: 101,
+            fileName: "Big.Buck.Bunny.en.srt",
+            language: "en",
+            release: "BluRay",
+            downloadCount: 900,
+          },
+          {
+            fileId: 102,
+            fileName: "Big.Buck.Bunny.es.srt",
+            language: "es",
+            release: "WEBRip",
+            downloadCount: 120,
+          },
+        ]
+      : [],
+    opensubtitles_login: null,
+    opensubtitles_download: { trackId: 4, sourceEncoding: null, imageBased: false },
     bug_report_context: {
-      appVersion: "0.20.0",
+      appVersion: "0.30.0",
       os: "windows",
       arch: "x86_64",
-      diagnostics: "App: Freally Player 0.20.0\nOS: windows / x86_64\n",
+      diagnostics: "App: Freally Player 0.30.0\nOS: windows / x86_64\n",
       pendingCrash: pendingCrash ? CRASH_EXCERPT : null,
     },
     bug_report_submit: null,

@@ -123,9 +123,19 @@ are also public at the URLs above; the pinned tag and commit identify the exact 
 
 | Component | Role | License |
 |-----------|------|---------|
+| [`chardetng`](https://crates.io/crates/chardetng) | subtitle charset auto-detect (the Firefox detector, pure Rust) — Phase 2 | Apache-2.0 OR MIT |
+| [`encoding_rs`](https://crates.io/crates/encoding_rs) | transcode a detected charset to UTF-8 before libass renders it — Phase 2 | (Apache-2.0 OR MIT) AND BSD-3-Clause |
+| [`reqwest`](https://crates.io/crates/reqwest) | HTTPS client for the **opt-in** OpenSubtitles fetch — Phase 2 | MIT OR Apache-2.0 |
+| [`rustls`](https://crates.io/crates/rustls) + [`rustls-webpki`](https://crates.io/crates/rustls-webpki) / [`rustls-pki-types`](https://crates.io/crates/rustls-pki-types) | TLS for the above (no system OpenSSL) — Phase 2 | Apache-2.0 OR ISC OR MIT · ISC · MIT OR Apache-2.0 |
+| [`aws-lc-rs`](https://crates.io/crates/aws-lc-rs) / [`ring`](https://crates.io/crates/ring) | the rustls crypto provider | ISC AND (Apache-2.0 OR ISC) · Apache-2.0 AND ISC |
 | [`rupnp`](https://crates.io/crates/rupnp) | UPnP/DLNA control — cast to / discover renderers, act as a renderer | MIT OR Apache-2.0 |
 | [`mdns-sd`](https://crates.io/crates/mdns-sd) | mDNS service discovery (Chromecast/DLNA on the LAN) | MIT OR Apache-2.0 |
 | [`souvlaki`](https://crates.io/crates/souvlaki) | OS media-key + now-playing integration (Windows SMTC / Linux MPRIS / macOS MediaRemote) | MIT |
+
+> The OpenSubtitles fetch is **opt-in and off by default** — nothing reaches the network unless
+> the user enables it and supplies their own API key. External subtitle files are treated as
+> **untrusted input**: the read is bounded and text is transcoded to UTF-8 before libass sees it.
+> See [`SECURITY.md`](SECURITY.md) and [`PRIVACY.md`](PRIVACY.md).
 
 **Run as a separate process, downloaded on demand (NOT bundled, NOT linked):**
 

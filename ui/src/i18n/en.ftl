@@ -131,3 +131,66 @@ bug-copy = Copy report
 bug-copied = Copied
 bug-dismiss-crash = Dismiss crash
 bug-copy-failed = Could not copy the report to the clipboard.
+
+
+## Audio & subtitle menus (the control bar's track pickers). Rendering is the engine's job;
+## these only pick and adjust the tracks.
+
+audio-menu = Audio
+audio-tracks = Audio tracks
+# An audio track with no name of its own, shown by number.
+audio-track-n = Track { $n }
+
+subtitle-menu = Subtitles
+subtitle-tracks = Subtitle track
+subtitle-off = Off
+# A subtitle track with no name of its own, shown by number.
+subtitle-track-n = Track { $n }
+subtitle-external = external
+subtitle-image-based = image
+subtitle-load-file = Load subtitle file…
+subtitle-visible = Show subtitles
+subtitle-secondary = Second subtitle
+subtitle-adjust = Timing & placement
+subtitle-delay = Delay
+subtitle-position = Position
+subtitle-scale = Size
+subtitle-reset = Reset
+# Short unit suffix for seconds, next to the subtitle delay value.
+unit-seconds-short = s
+
+# The honest note shown after loading an external or online subtitle.
+subtitle-loaded = Subtitle loaded.
+subtitle-loaded-encoding = Loaded, converted from { $encoding }.
+subtitle-loaded-image = Image-based subtitle loaded — styling does not apply.
+
+# Opt-in online subtitle fetch (OpenSubtitles). "OpenSubtitles" is a brand — never translated.
+subtitle-online = Online subtitles
+subtitle-online-disabled = Turn on online subtitles in Settings to search.
+subtitle-online-query = Title to search
+subtitle-online-languages = Languages
+subtitle-online-search = Search
+subtitle-online-username = Username
+subtitle-online-password = Password
+subtitle-online-signin = Sign in
+
+
+## Settings — Subtitles pane.
+
+settings-subtitles = Subtitles
+
+settings-sub-style-title = Subtitle style
+settings-sub-style-hint = Force how subtitles look, for readability.
+settings-sub-style-enable = Override subtitle styling
+settings-sub-style-enable-hint = Uses your font, size and colour instead of the file's own styling. Applies to text subtitles only.
+settings-sub-style-font = Font
+settings-sub-style-size = Size
+settings-sub-style-color = Colour
+
+settings-online-title = Online subtitles
+settings-online-hint = Fetch subtitles from OpenSubtitles. Off by default.
+settings-online-enable = Enable online subtitle fetch
+settings-online-enable-hint = Opt-in. Needs your own free OpenSubtitles account and API key.
+settings-online-key = API key
+settings-online-username = Username
+settings-online-privacy = Only the title and languages you search are sent. Your password is never stored.

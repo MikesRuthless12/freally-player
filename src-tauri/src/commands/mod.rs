@@ -2,3 +2,4 @@
 //! access — every I/O path the UI can reach is a command in here.
 
 pub mod playback;
+pub mod subtitles;

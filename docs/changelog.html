@@ -25,6 +25,35 @@
     </header>
 
     <main>
+      <!-- In development (unreleased) -->
+      <article class="release">
+        <div class="release-head">
+          <div class="meta">
+            <span class="badge upcoming">v0.30.0 · In development</span>
+            <span class="date">Building now · downloads when it ships</span>
+          </div>
+        </div>
+
+        <h2>0.30.0 — subtitles</h2>
+        <p class="summary">
+          Best-in-class subtitles. Switch audio and subtitle tracks instantly, load an external
+          file in any encoding, nudge the sync and move the line where you want it, run two
+          subtitle tracks at once, and — if you opt in with your own key — fetch subtitles online.
+          Completely free, every feature included.
+          <strong>No ads, no telemetry, no account — ever.</strong>
+        </p>
+
+        <h3>New in 0.30.0</h3>
+        <ul class="features">
+          <li><strong>Audio &amp; subtitle track switching.</strong> A menu for each, listing every track in the file — by its name, or its language spelled out — with instant switching.</li>
+          <li><strong>Load any subtitle file.</strong> SRT, ASS/SSA, WebVTT, MicroDVD, and image-based PGS/VobSub. A legacy-encoded file (Windows-1251, Shift-JIS, …) is auto-detected and converted so it reads correctly instead of as garbled text — and it tells you what it did.</li>
+          <li><strong>Sync, position and size — remembered per file.</strong> Fix an out-of-sync subtitle, move it up off a burned-in caption, or make it bigger; the adjustment is there next time you open that file.</li>
+          <li><strong>Two subtitles at once.</strong> Show a second track alongside the first — handy for learning a language.</li>
+          <li><strong>A readability override.</strong> Force your own font, size and colour over a file's styling, for accessibility. Off by default, and honest that it overrides the author's design.</li>
+          <li><strong>Opt-in OpenSubtitles fetch.</strong> Off unless you turn it on and add your own free API key. Only the title and languages you search are ever sent, over an encrypted connection; your password is never stored.</li>
+        </ul>
+      </article>
+
       <!-- Latest release -->
       <article class="release latest">
         <div class="release-head">
@@ -106,10 +135,18 @@
             <span class="soon">Shipped</span>
           </li>
           <li>
-            <span class="badge upcoming">0.30.0 – 0.50.0</span>
+            <span class="badge upcoming">0.30.0</span>
             <div>
-              <strong>Subtitles, audio &amp; playlists</strong>
-              <p>Full subtitles (ASS + online fetch); audiophile audio (EQ/exclusive/passthrough/tracks); playlists, video filters, mini-player/PiP.</p>
+              <strong>Subtitles</strong>
+              <p>Track switching, external load with encoding auto-detect, per-file sync/position/scale, secondary subtitles, an accessibility style override, and opt-in online fetch.</p>
+            </div>
+            <span class="soon">In development</span>
+          </li>
+          <li>
+            <span class="badge upcoming">0.40.0 – 0.50.0</span>
+            <div>
+              <strong>Audio &amp; playlists</strong>
+              <p>Audiophile audio (EQ/exclusive/passthrough/tracks); playlists, video filters, mini-player/PiP.</p>
             </div>
             <span class="soon">Coming soon</span>
           </li>

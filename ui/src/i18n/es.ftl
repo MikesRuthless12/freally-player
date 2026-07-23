@@ -98,3 +98,57 @@ bug-copy = Copiar informe
 bug-copied = Copiado
 bug-dismiss-crash = Descartar el fallo
 bug-copy-failed = No se ha podido copiar el informe al portapapeles.
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = Audio
+audio-tracks = Pistas de audio
+audio-track-n = Pista { $n }
+
+subtitle-menu = Subtítulos
+subtitle-tracks = Pista de subtítulos
+subtitle-off = Desactivados
+subtitle-track-n = Pista { $n }
+subtitle-external = externo
+subtitle-image-based = imagen
+subtitle-load-file = Cargar archivo de subtítulos…
+subtitle-visible = Mostrar subtítulos
+subtitle-secondary = Segundo subtítulo
+subtitle-adjust = Sincronización y posición
+subtitle-delay = Retraso
+subtitle-position = Posición
+subtitle-scale = Tamaño
+subtitle-reset = Restablecer
+unit-seconds-short = s
+
+subtitle-loaded = Subtítulo cargado.
+subtitle-loaded-encoding = Cargado, convertido desde { $encoding }.
+subtitle-loaded-image = Subtítulo de imagen cargado: el estilo no se aplica.
+
+subtitle-online = Subtítulos en línea
+subtitle-online-disabled = Activa los subtítulos en línea en Ajustes para buscar.
+subtitle-online-query = Título a buscar
+subtitle-online-languages = Idiomas
+subtitle-online-search = Buscar
+subtitle-online-username = Usuario
+subtitle-online-password = Contraseña
+subtitle-online-signin = Iniciar sesión
+
+settings-subtitles = Subtítulos
+
+settings-sub-style-title = Estilo de subtítulos
+settings-sub-style-hint = Fuerza el aspecto de los subtítulos, para mejorar la legibilidad.
+settings-sub-style-enable = Anular el estilo de los subtítulos
+settings-sub-style-enable-hint = Usa tu fuente, tamaño y color en lugar del estilo del archivo. Solo se aplica a subtítulos de texto.
+settings-sub-style-font = Fuente
+settings-sub-style-size = Tamaño
+settings-sub-style-color = Color
+
+settings-online-title = Subtítulos en línea
+settings-online-hint = Obtén subtítulos de OpenSubtitles. Desactivado de forma predeterminada.
+settings-online-enable = Activar la búsqueda de subtítulos en línea
+settings-online-enable-hint = Opcional. Requiere tu propia cuenta gratuita de OpenSubtitles y una clave de API.
+settings-online-key = Clave de API
+settings-online-username = Usuario
+settings-online-privacy = Solo se envían el título y los idiomas que buscas. Tu contraseña nunca se guarda.

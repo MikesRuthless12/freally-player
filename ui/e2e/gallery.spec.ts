@@ -75,7 +75,7 @@ test("02 — player shell, nothing loaded", async ({ page }) => {
 
   await expect(page.getByText("No media loaded")).toBeVisible();
   await expect(page.getByLabel("Video stage")).toBeVisible();
-  await expect(page.getByText("v0.20.0")).toBeVisible();
+  await expect(page.getByText("v0.30.0")).toBeVisible();
 
   await page.screenshot({ path: `${DIR}/02-player-idle.png` });
 });
@@ -373,7 +373,13 @@ test("15 — Settings modal, General with minimize to tray", async ({ page }) =>
   await expect.poll(() => invoked(page)).toContain("settings_set");
   expect(await lastArgs(page, "settings_set")).toEqual({
     // `language: null` — nothing chosen yet, so the UI is still following the OS.
-    settings: { theme: "dark", minimizeToTray: true, language: null },
+    settings: {
+      theme: "dark",
+      minimizeToTray: true,
+      subtitleStyle: { enabled: false, font: null, fontSize: null, color: null },
+      openSubtitles: { enabled: false, apiKey: null, username: null },
+      language: null,
+    },
   });
 
   await page.screenshot({ path: `${DIR}/15-settings-general.png` });
@@ -400,7 +406,7 @@ test("16 — Settings modal, Appearance and About panes", async ({ page }) => {
 
   await dialog.getByRole("button", { name: "About", exact: true }).click();
   await expect(dialog.getByText(/All Rights Reserved/)).toBeVisible();
-  await expect(dialog.getByText("0.20.0")).toBeVisible();
+  await expect(dialog.getByText("0.30.0")).toBeVisible();
   await page.screenshot({ path: `${DIR}/16b-settings-about.png` });
 });
 
@@ -429,4 +435,119 @@ test("07 — bug reporter auto-surfaces a pending crash", async ({ page }) => {
   await expect(page.getByText(/Crashed: 2026-07-21/)).toBeVisible();
 
   await page.screenshot({ path: `${DIR}/07-bug-report-pending-crash.png` });
+});
+
+// --- Phase 2: subtitles & audio tracks --------------------------------------
+
+test("18 — the audio menu lists tracks and switches one", async ({ page }) => {
+  await boot(page, "?media=1");
+  await playerReady(page);
+
+  await page.getByRole("button", { name: "Audio", exact: true }).click();
+  const menu = page.getByRole("menu", { name: "Audio" });
+  await expect(menu).toBeVisible();
+  // The named track shows its title; the unnamed one is spelled out from its language code.
+  await expect(menu.getByText("Stereo")).toBeVisible();
+  await expect(menu.getByText("Japanese")).toBeVisible();
+  await page.screenshot({ path: `${DIR}/18-audio-menu.png` });
+
+  await menu.getByRole("menuitem", { name: "Japanese" }).click();
+  await expect.poll(() => invoked(page)).toContain("set_audio_track");
+  expect(await lastArgs(page, "set_audio_track")).toEqual({ id: 2 });
+});
+
+test("19 — the subtitle menu switches tracks and adjusts sync", async ({ page }) => {
+  await boot(page, "?media=1");
+  await playerReady(page);
+
+  await page.getByRole("button", { name: "Subtitles", exact: true }).click();
+  const menu = page.getByRole("menu", { name: "Subtitles" });
+  await expect(menu).toBeVisible();
+  // Off plus the two tracks, and the per-file timing controls (the primary track is on).
+  // "English" appears in both the primary and secondary track lists, so scope to the first.
+  await expect(menu.getByText("English").first()).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Off" }).first()).toBeVisible();
+  await page.screenshot({ path: `${DIR}/19-subtitle-menu.png` });
+
+  // Nudge the delay: the first "Delay +" press moves it a tenth of a second.
+  await menu.getByRole("button", { name: "Delay +" }).click();
+  await expect.poll(() => invoked(page)).toContain("set_subtitle_delay");
+  expect(await lastArgs(page, "set_subtitle_delay")).toEqual({ secs: 0.1 });
+
+  // Turning the primary track off sends a null selection.
+  await menu.getByRole("menuitem", { name: "Off" }).first().click();
+  await expect.poll(() => invoked(page)).toContain("set_subtitle_track");
+  expect(await lastArgs(page, "set_subtitle_track")).toEqual({ id: null });
+});
+
+test("20 — loading an external subtitle transcodes and names the encoding", async ({ page }) => {
+  await boot(page, "?media=1");
+  await playerReady(page);
+
+  await page.getByRole("button", { name: "Subtitles", exact: true }).click();
+  await page.getByRole("button", { name: "Load subtitle file…" }).click();
+
+  await expect.poll(() => invoked(page)).toContain("add_subtitle_file");
+  expect(await lastArgs(page, "add_subtitle_file")).toEqual({
+    path: "C:/Videos/Big Buck Bunny.mkv",
+  });
+  // The honest note tells the viewer the file was converted from its legacy charset.
+  await expect(page.getByText(/converted from windows-1251/)).toBeVisible();
+  await page.screenshot({ path: `${DIR}/20-subtitle-loaded.png` });
+});
+
+test("21 — Settings Subtitles pane: style override and OpenSubtitles opt-in", async ({ page }) => {
+  await boot(page, "?substyle=1");
+  await playerReady(page);
+
+  await page.getByRole("button", { name: "Settings" }).click();
+  const dialog = page.getByRole("dialog", { name: "Settings" });
+  await dialog.waitFor({ timeout: 10_000 });
+  await dialog.getByRole("button", { name: "Subtitles", exact: true }).click();
+
+  // The style override is on (from ?substyle=1), so its font/size/colour fields are shown.
+  await expect(dialog.getByRole("checkbox", { name: "Override subtitle styling" })).toBeChecked();
+  await expect(dialog.getByText("Font", { exact: true })).toBeVisible();
+  // The OpenSubtitles opt-in toggle is present and off by default.
+  await expect(
+    dialog.getByRole("checkbox", { name: "Enable online subtitle fetch" }),
+  ).toBeVisible();
+  await page.screenshot({ path: `${DIR}/21-settings-subtitles.png` });
+});
+
+test("22 — OpenSubtitles search, sign-in and download, when opted in", async ({ page }) => {
+  await boot(page, "?media=1&os=1");
+  await playerReady(page);
+
+  await page.getByRole("button", { name: "Subtitles", exact: true }).click();
+  const menu = page.getByRole("menu", { name: "Subtitles" });
+  const query = menu.getByRole("textbox", { name: "Title to search" });
+  await query.waitFor({ timeout: 10_000 });
+
+  await query.fill("Big Buck Bunny");
+  await menu.getByRole("button", { name: "Search", exact: true }).click();
+  await expect.poll(() => invoked(page)).toContain("opensubtitles_search");
+  expect(await lastArgs(page, "opensubtitles_search")).toEqual({
+    query: "Big Buck Bunny",
+    languages: ["en"],
+  });
+
+  // Results render with their filenames.
+  await expect(menu.getByText("Big.Buck.Bunny.en.srt")).toBeVisible();
+  await page.screenshot({ path: `${DIR}/22-opensubtitles.png` });
+
+  // Signing in exchanges credentials for a session (the password is never persisted).
+  // A password input is not exposed as a textbox role, so target it by its label.
+  await menu.getByLabel("Password").fill("hunter2");
+  await menu.getByRole("button", { name: "Sign in" }).click();
+  await expect.poll(() => invoked(page)).toContain("opensubtitles_login");
+  expect(await lastArgs(page, "opensubtitles_login")).toEqual({
+    username: "cinephile",
+    password: "hunter2",
+  });
+
+  // Choosing a result downloads and attaches it.
+  await menu.getByRole("button", { name: /Big\.Buck\.Bunny\.en\.srt/ }).click();
+  await expect.poll(() => invoked(page)).toContain("opensubtitles_download");
+  expect(await lastArgs(page, "opensubtitles_download")).toEqual({ fileId: 101 });
 });

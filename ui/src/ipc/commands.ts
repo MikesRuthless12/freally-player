@@ -9,9 +9,12 @@ import type {
   BugReportContext,
   BugReportTarget,
   EulaStatus,
+  LoadedSubtitleInfo,
   MediaInfo,
   PlaybackState,
   RecentWatch,
+  SubStyleOverride,
+  SubtitleCandidate,
   UserSettings,
 } from "./types";
 
@@ -79,6 +82,66 @@ export const captureFrame = (path: string, withSubs: boolean): Promise<void> =>
 /** The recently-watched items for the idle screen's Continue-Watching row, newest first. */
 export const recentWatch = (limit: number): Promise<RecentWatch[]> =>
   invoke<RecentWatch[]>("recent_watch", { limit });
+
+// --- Subtitles & audio tracks ----------------------------------------------
+// Every mutating command also emits `player://state`; see `ipc/events.ts`.
+
+/** Select the audio track (`aid`), or `null` to disable audio. */
+export const setAudioTrack = (id: number | null): Promise<void> =>
+  invoke<void>("set_audio_track", { id });
+
+/** Select the primary subtitle track (`sid`), or `null` to turn subtitles off. */
+export const setSubtitleTrack = (id: number | null): Promise<void> =>
+  invoke<void>("set_subtitle_track", { id });
+
+/** Select the secondary subtitle track (two at once), or `null` to turn it off. */
+export const setSecondarySubtitleTrack = (id: number | null): Promise<void> =>
+  invoke<void>("set_secondary_subtitle_track", { id });
+
+/** Show or hide the primary subtitle without forgetting which track is selected. */
+export const setSubtitleVisible = (visible: boolean): Promise<void> =>
+  invoke<void>("set_subtitle_visible", { visible });
+
+/** Set the subtitle timing offset in seconds (`sub-delay`). */
+export const setSubtitleDelay = (secs: number): Promise<void> =>
+  invoke<void>("set_subtitle_delay", { secs });
+
+/** Set the subtitle vertical position on mpv's 0–150 scale (`sub-pos`). */
+export const setSubtitlePos = (pos: number): Promise<void> =>
+  invoke<void>("set_subtitle_pos", { pos });
+
+/** Set the subtitle size multiplier (`sub-scale`). */
+export const setSubtitleScale = (scale: number): Promise<void> =>
+  invoke<void>("set_subtitle_scale", { scale });
+
+/** Apply and persist the global subtitle style override (accessibility). */
+export const setSubtitleStyleOverride = (style: SubStyleOverride): Promise<void> =>
+  invoke<void>("set_subtitle_style_override", { style });
+
+/**
+ * Load an external subtitle file. The path comes from the UI's native picker — the web layer
+ * never touches the filesystem itself. The file is treated as untrusted (bounded, transcoded to
+ * UTF-8 when it is legacy-charset text) before the engine renders it.
+ */
+export const addSubtitleFile = (path: string): Promise<LoadedSubtitleInfo> =>
+  invoke<LoadedSubtitleInfo>("add_subtitle_file", { path });
+
+// --- Opt-in OpenSubtitles ---------------------------------------------------
+
+/** Search OpenSubtitles by query and language codes. Only these identifiers leave the machine. */
+export const openSubtitlesSearch = (
+  query: string,
+  languages: string[],
+): Promise<SubtitleCandidate[]> =>
+  invoke<SubtitleCandidate[]>("opensubtitles_search", { query, languages });
+
+/** Sign in to OpenSubtitles for the session. The password is never stored. */
+export const openSubtitlesLogin = (username: string, password: string): Promise<void> =>
+  invoke<void>("opensubtitles_login", { username, password });
+
+/** Download a chosen candidate and attach it as a subtitle track (needs a session login). */
+export const openSubtitlesDownload = (fileId: number): Promise<LoadedSubtitleInfo> =>
+  invoke<LoadedSubtitleInfo>("opensubtitles_download", { fileId });
 
 /**
  * Report where the video stage is, in physical pixels relative to the window's client area.

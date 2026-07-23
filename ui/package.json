@@ -1,7 +1,7 @@
 {
   "name": "@freally-player/ui",
   "private": true,
-  "version": "0.20.0",
+  "version": "0.30.0",
   "type": "module",
   "description": "Freally Player — the React + TypeScript UI (Vite, Havoc dark).",
   "license": "SEE LICENSE IN LICENSE",

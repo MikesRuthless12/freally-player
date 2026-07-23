@@ -98,3 +98,57 @@ bug-copy = Copia il rapporto
 bug-copied = Copiato
 bug-dismiss-crash = Ignora l’arresto anomalo
 bug-copy-failed = Impossibile copiare il rapporto negli appunti.
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = Audio
+audio-tracks = Tracce audio
+audio-track-n = Traccia { $n }
+
+subtitle-menu = Sottotitoli
+subtitle-tracks = Traccia sottotitoli
+subtitle-off = Disattivati
+subtitle-track-n = Traccia { $n }
+subtitle-external = esterno
+subtitle-image-based = immagine
+subtitle-load-file = Carica file di sottotitoli…
+subtitle-visible = Mostra sottotitoli
+subtitle-secondary = Secondo sottotitolo
+subtitle-adjust = Sincronizzazione e posizione
+subtitle-delay = Ritardo
+subtitle-position = Posizione
+subtitle-scale = Dimensione
+subtitle-reset = Reimposta
+unit-seconds-short = s
+
+subtitle-loaded = Sottotitolo caricato.
+subtitle-loaded-encoding = Caricato, convertito da { $encoding }.
+subtitle-loaded-image = Sottotitolo a immagini caricato — lo stile non si applica.
+
+subtitle-online = Sottotitoli online
+subtitle-online-disabled = Attiva i sottotitoli online nelle Impostazioni per cercare.
+subtitle-online-query = Titolo da cercare
+subtitle-online-languages = Lingue
+subtitle-online-search = Cerca
+subtitle-online-username = Nome utente
+subtitle-online-password = Password
+subtitle-online-signin = Accedi
+
+settings-subtitles = Sottotitoli
+
+settings-sub-style-title = Stile dei sottotitoli
+settings-sub-style-hint = Forza l'aspetto dei sottotitoli, per la leggibilità.
+settings-sub-style-enable = Sovrascrivi lo stile dei sottotitoli
+settings-sub-style-enable-hint = Usa il tuo carattere, dimensione e colore invece dello stile del file. Si applica solo ai sottotitoli di testo.
+settings-sub-style-font = Carattere
+settings-sub-style-size = Dimensione
+settings-sub-style-color = Colore
+
+settings-online-title = Sottotitoli online
+settings-online-hint = Scarica sottotitoli da OpenSubtitles. Disattivato per impostazione predefinita.
+settings-online-enable = Abilita la ricerca di sottotitoli online
+settings-online-enable-hint = Facoltativo. Richiede un tuo account OpenSubtitles gratuito e una chiave API.
+settings-online-key = Chiave API
+settings-online-username = Nome utente
+settings-online-privacy = Vengono inviati solo il titolo e le lingue che cerchi. La tua password non viene mai memorizzata.

@@ -98,3 +98,57 @@ bug-copy = Salin laporan
 bug-copied = Tersalin
 bug-dismiss-crash = Abaikan kerusakan
 bug-copy-failed = Laporan tidak dapat disalin ke papan klip.
+
+
+## Audio, subtitles & online fetch (Phase 2).
+
+audio-menu = Audio
+audio-tracks = Trek audio
+audio-track-n = Trek { $n }
+
+subtitle-menu = Subtitle
+subtitle-tracks = Trek subtitle
+subtitle-off = Nonaktif
+subtitle-track-n = Trek { $n }
+subtitle-external = eksternal
+subtitle-image-based = gambar
+subtitle-load-file = Muat berkas subtitle…
+subtitle-visible = Tampilkan subtitle
+subtitle-secondary = Subtitle kedua
+subtitle-adjust = Waktu & posisi
+subtitle-delay = Jeda
+subtitle-position = Posisi
+subtitle-scale = Ukuran
+subtitle-reset = Setel ulang
+unit-seconds-short = d
+
+subtitle-loaded = Subtitle dimuat.
+subtitle-loaded-encoding = Dimuat, dikonversi dari { $encoding }.
+subtitle-loaded-image = Subtitle berbasis gambar dimuat — gaya tidak berlaku.
+
+subtitle-online = Subtitle daring
+subtitle-online-disabled = Aktifkan subtitle daring di Pengaturan untuk mencari.
+subtitle-online-query = Judul untuk dicari
+subtitle-online-languages = Bahasa
+subtitle-online-search = Cari
+subtitle-online-username = Nama pengguna
+subtitle-online-password = Kata sandi
+subtitle-online-signin = Masuk
+
+settings-subtitles = Subtitle
+
+settings-sub-style-title = Gaya subtitle
+settings-sub-style-hint = Paksa tampilan subtitle, demi keterbacaan.
+settings-sub-style-enable = Timpa gaya subtitle
+settings-sub-style-enable-hint = Memakai font, ukuran, dan warna Anda alih-alih gaya berkas. Hanya berlaku untuk subtitle teks.
+settings-sub-style-font = Font
+settings-sub-style-size = Ukuran
+settings-sub-style-color = Warna
+
+settings-online-title = Subtitle daring
+settings-online-hint = Ambil subtitle dari OpenSubtitles. Nonaktif secara bawaan.
+settings-online-enable = Aktifkan pengambilan subtitle daring
+settings-online-enable-hint = Keikutsertaan. Perlu akun OpenSubtitles gratis dan kunci API Anda sendiri.
+settings-online-key = Kunci API
+settings-online-username = Nama pengguna
+settings-online-privacy = Hanya judul dan bahasa yang Anda cari yang dikirim. Kata sandi Anda tidak pernah disimpan.

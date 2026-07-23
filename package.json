@@ -1,7 +1,7 @@
 {
   "name": "freally-player-workspace",
   "private": true,
-  "version": "0.20.0",
+  "version": "0.30.0",
   "description": "Freally Player \u2014 npm workspace root (React/Vite UI + Tauri CLI).",
   "license": "SEE LICENSE IN LICENSE",
   "workspaces": [
