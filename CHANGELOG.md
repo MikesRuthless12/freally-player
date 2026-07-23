@@ -17,6 +17,8 @@ release).
 
 ## [Unreleased]
 
+## [0.30.0] — 2026-07-23
+
 ### Added — Phase 2: subtitles
 - **Subtitle & audio track switching** — a subtitle menu and an audio menu in the control bar,
   each listing the media's tracks (a track's own title, else its language spelled out in the UI
