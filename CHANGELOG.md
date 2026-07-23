@@ -8,15 +8,18 @@ Freally Player is © 2026 Mike Weaver — All Rights Reserved (proprietary, sour
 [`LICENSE`](LICENSE)). **Project started: June 30th, 2026.** **v1.0.0 released: ______** (fill on
 release).
 
-> **Status: in development.** `0.10.0` was tagged but **never published** — its installers had no
-> playback engine, so the draft release was discarded rather than shipped. `0.10.1` is the first
-> build that actually plays: it bundles libmpv. The release ladder runs
+> **Status: in development.** `0.10.0` and `0.10.1` were tagged but **never published** — the
+> first had no playback engine and the second was held back, so neither draft shipped. **`0.20.0`
+> is the first published release**: it bundles libmpv, plays, and carries the full playback UI and
+> the 18-language interface. The release ladder runs
 > **0.10.0 → 0.20.0 → 0.30.0 → 0.40.0 → 0.50.0 → 0.60.0 → 0.70.0 → 0.80.0 → 0.85.0 (library milestone — first public) → 0.95.0 → 1.0.0**,
 > one tag per phase (see `product-roadmap.md`).
 
 ## [Unreleased]
 
-### Added — Phase 1: core playback UI (→ 0.20.0)
+## [0.20.0] — 2026-07-23
+
+### Added — Phase 1: core playback UI
 - **A glassy control bar under the picture** — play/pause, frame-step, ±10s skip, a live clock,
   volume with a mute toggle, a playback-speed menu (0.25×–4.0×), A–B repeat, a chapters menu, a
   snapshot button, and fullscreen. It **auto-hides during playback** so the picture fills the
@@ -44,7 +47,7 @@ release).
 - **An idle screen** — a drop zone (drop a file anywhere to open it), an Open button, and a
   **Continue-Watching row** of the files you last left partway through, each with a progress bar.
 
-### Added — done earlier, still unreleased
+### Added — the 18-language UI (landed after Phase 0, first shipping in 0.20.0)
 - **The UI is translated into all 18 shipped languages** (`ar de en es fr hi id it ja ko nl pl
   pt-BR ru tr uk vi zh-CN`), with a **Language pane in Settings** that switches instantly — no
   restart, no reload, no request. Every user-visible string now goes through a Fluent catalog in
